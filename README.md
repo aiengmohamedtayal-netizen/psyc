@@ -1,245 +1,240 @@
-# 🧠 منصة Stress AI Helper — المساعد الذكي للدعم النفسي والاسترخاء
-> **Bilingual Cognitive-Behavioral AI & Clinical Psychiatry Platform**  
-> مدعوم بمحرك معالجة اللغة الطبيعية (NLP) + موديل **DeepSeek V4 Flash** + أبحاث الطب النفسي من **PubMed (NIH)**
+# Psyc — Intelligent Mental Health & Stress Companion
+
+[![React 19](https://img.shields.io/badge/Frontend-React%2019%20%7C%20Vite-61DAFB?style=flat-square&logo=react)](https://psyc-17r.pages.dev)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20%7C%20Python%203.12+-009688?style=flat-square&logo=fastapi)](https://psyc-phi.vercel.app)
+[![Cloudflare Pages](https://img.shields.io/badge/Hosting-Cloudflare%20Pages-F38020?style=flat-square&logo=cloudflare)](https://psyc-17r.pages.dev)
+[![Vercel](https://img.shields.io/badge/Serverless-Vercel-000000?style=flat-square&logo=vercel)](https://psyc-phi.vercel.app)
+[![Neon PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=flat-square&logo=postgresql)](https://neon.tech)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+
+**Psyc** is a production-grade, bilingual mental health and stress assistance platform built on cognitive behavioral therapy (CBT) principles, evidence-based psychiatric literature, and somatic grounding exercises.
+
+Designed with an editorial, warm aesthetic inspired by Anthropic Claude, the application operates on a decoupled cloud architecture: an ultra-fast React 19 single-page application served via Cloudflare Pages edge CDN, communicating with an asynchronous FastAPI serverless backend on Vercel backed by Neon PostgreSQL.
 
 ---
 
-## 🌟 نظرة عامة على المشروع (Executive Overview)
+## 🌐 Live Production Deployments
 
-**Stress AI Helper** هو نظام ذكي متكامل للدعم النفسي وتخفيف التوتر، يجمع بين دقة قواعد البيانات النفسية المعتمدة (905 سؤال وجواب)، وقوة النماذج اللغوية الضخمة (**DeepSeek V4 Flash**)، والأبحاث الطبية المنشورة في **مكتبة الطب الوطنية الأمريكية (PubMed / NIH)**، مع واجهة مستخدم تحريرية فاخرة مستوحاة بالكامل من هوية **Anthropic Claude** بالخط العربي الأيقوني **IBM Plex Sans Arabic**.
+| Component | Platform | URL |
+| :--- | :--- | :--- |
+| **Frontend Application** | Cloudflare Pages | [https://psyc-17r.pages.dev](https://psyc-17r.pages.dev) |
+| **Backend API Service** | Vercel Serverless | [https://psyc-phi.vercel.app](https://psyc-phi.vercel.app) |
+| **Interactive OpenAPI Docs** | Swagger UI | [https://psyc-phi.vercel.app/docs](https://psyc-phi.vercel.app/docs) |
+| **System & DB Health Check** | FastAPI Monitor | [https://psyc-phi.vercel.app/health/db](https://psyc-phi.vercel.app/health/db) |
+| **Source Repository** | GitHub | [aiengmohamedtayal-netizen/psyc](https://github.com/aiengmohamedtayal-netizen/psyc) |
 
 ---
 
-## 🏛️ معمارية النظام (System Architecture)
+## 🏛️ System Architecture
 
 ```mermaid
 flowchart TD
-    UserQuery["💬 سؤال المستخدم (عربي / English)"] --> AuthCheck["🔐 بوابة التحقق والحساب المحلي"]
-    AuthCheck --> CrisisGuard{"⚠️ كاشف الأزمات السريرية (Crisis Guardrails)"}
+    User["👤 User (Desktop / Tablet / Mobile)"] -->|HTTPS / Edge CDN| CF["🌐 Cloudflare Pages (React 19 SPA)"]
+    CF -->|REST / SSE Streaming| Vercel["⚡ Vercel Serverless (FastAPI)"]
     
-    CrisisGuard -- "أفكار انتحار أو إيذاء نفس" --> EmergencyHelpline["🚨 خطوط النجدة النفسية الفورية 24/7 (16328 / 08008880700)"]
-    CrisisGuard -- "استفسار نفسي / توتر طبيعي" --> NLPDispatcher["🔍 مطابقة الـ NLP الدلالية (TF-IDF Cosine Similarity)"]
+    subgraph BackendEngine ["FastAPI Application Core"]
+        Vercel --> Limiter["🛡️ SlowAPI Rate Limiter (120 req/min)"]
+        Limiter --> Routers["🔀 Modular Routers (/predict, /api/auth, /api/conversations)"]
+        
+        Routers --> Safety["🚨 Crisis Guardrails & Emergency Intercept (16328 / 988)"]
+        Routers --> NLP["🧠 Bilingual NLP Pipeline (TF-IDF + Dialect Normalizer)"]
+        NLP --> QA_Dataset[("📚 905 Curated Clinical QA Pairs")]
+        
+        Routers --> PubMed["🧬 PubMed & Clinical Literature Service (NCBI API)"]
+        Routers --> LLM["🤖 DeepSeek V4 Flash Generative Engine"]
+        
+        Routers --> DB_Pool["🔌 NullPool Connection Manager"]
+        DB_Pool --> NeonDB[("🐘 Neon Serverless PostgreSQL")]
+    end
     
-    NLPDispatcher --> LocalDB[("📚 قاعدة البيانات المعتمدة (905 أسئلة سريرية)")]
-    NLPDispatcher --> ClinicalService["🧬 محرك المراجع السريرية (PubMed / NIMH / APA)"]
-    
-    ClinicalService --> PubMedAPI["🌐 PubMed NCBI E-utilities API البحث المباشر"]
-    ClinicalService --> ClinicalProtocols["📋 بروتوكولات الطب النفسي (CBT-I / GAD-7 / AASM)"]
-    
-    LocalDB --> PromptBuilder["⚙️ بناء الـ System Prompt السلوكي المعرفي (CBT)"]
-    PubMedAPI --> PromptBuilder
-    ClinicalProtocols --> PromptBuilder
-    
-    PromptBuilder --> DeepSeekEngine["⚡ موديل DeepSeek V4 Flash (SovereignEG)"]
-    DeepSeekEngine --> SSEStream["📡 البث المباشر للكلمات (Real-Time SSE Streaming)"]
-    DeepSeekEngine -- "تعثر بالشبكة" --> FallbackEngine["🛡️ الرجوع الآمن لقاعدة البيانات المحلية"]
-    
-    SSEStream --> ClaudeUI["🖥️ واجهة Claude AI الفاخرة + الخط العربي IBM Plex"]
-    FallbackEngine --> ClaudeUI
+    LLM -->|Chunked SSE Token Stream| CF
+    Safety -->|Immediate Crisis Intervention Banner| User
 ```
 
 ---
 
-## ✨ أبرز مميزات النظام (Key Features)
+## ✨ Core Capabilities
 
-### 1. الذكاء الاصطناعي السريري والهجين (Hybrid AI & Clinical Engine)
-* **محرك بحث دلالي فائق السرعة**: يعمل بتقنية `TF-IDF n-gram` ومطابقة جيب التمام (`Cosine Similarity`) مع مصفوفة من 905 سؤال وجواب معتمد في مجالات (القلق، التوتر، الأرق، صعوبات المذاكرة، وفقدان الشغف).
-* **توليد مباشر بموديل DeepSeek V4 Flash**: صياغة ردود إنسانية، دافئة، وعملية مستندة إلى مبادئ العلاج المعرفي السلوكي (CBT).
-* **البث المباشر للكلمات (Real-Time SSE Streaming)**: تدفق الكلمات لحظة بلحظة مع مؤشر كتابة نابض بلون التيراكوتا (`streaming-cursor`).
-* **ذاكرة الحوار المستمر (Multi-turn Context Memory)**: يتذكر الموديل سياق الحوار وآخر رسائل متبادلة للرد بوعي تراكمي.
+### 1. Bilingual Hybrid NLP & RAG Pipeline
+- **Egyptian & Arabic Dialect Normalization**: Custom preprocessor that standardizes colloquial Egyptian phrasing (`مخنوق`, `مش عارف انام`, `تايه`, `قلقان`) and Modern Standard Arabic prior to vectorization.
+- **TF-IDF & Cosine Similarity Matcher**: Sub-5ms retrieval across a domain-specific dataset of 905 clinically vetted question-answer pairs covering Anxiety, Stress, Insomnia, Motivation, and Academic pressure.
+- **DeepSeek V4 Flash Generative Layer**: Contextual, empathetic response generation framed strictly within cognitive behavioral therapy (CBT) methodology.
+- **Real-Time Token Streaming**: Server-Sent Events (SSE) streaming delivering conversational output with realistic human typing cadence and pulsing cursor feedback.
 
-### 2. المرجعية الطبية وأبحاث PubMed (Authoritative Medical Grounding)
-* **ربط مباشر مع PubMed / NCBI API**: يبحث النظام تلقائياً عن الأبحاث السريرية ويجلب كود البحث الدولي (`PubMed PMC ID`).
-* **بروتوكولات سريرية معتمدة عالمياً**:
-  * **القلق والهلع (Anxiety & Panic)**: إرشادات الجمعية الأمريكية للطب النفسي (APA) والمعهد القومي للصحة النفسية (NIMH).
-  * **الأرق والنوم (Insomnia & Sleep)**: الدليل الإكلينيكي للأكاديمية الأمريكية لطب النوم (AASM).
-  * **الإجهاد والتوتر (Stress & Vagal Tone)**: دليل منظمة الصحة العالمية (WHO mhGAP) ودراسات هارفارد.
-  * **علاج الإدمان (Addiction Recovery)**: إرشادات NIDA وصندوق مكافحة وعلاج الإدمان (الخط الساخن 16023).
-* **شارات المراجع الطبية في الواجهة (Clickable Clinical Badges)**: تظهر أسفل كل رد شارة موثقة بالمرجع الطبي وتفتح الورقة البحثية الأصلية بضغطة واحدة.
+### 2. Evidence-Based Clinical Grounding
+- **Automated PubMed / NCBI Integration**: Searches and cites peer-reviewed psychiatric studies directly matching user query topics.
+- **Clinical Protocols**: Grounded in guidelines from the American Psychiatric Association (APA), National Institute of Mental Health (NIMH), and American Academy of Sleep Medicine (AASM).
+- **Interactive Citation Cards**: Collapsible clinical references showing article title, PMC ID, and verified external DOI/PubMed links.
 
-### 3. الأمان السريري والتدخل في الطوارئ (Clinical Safety Guardrails)
-* كاشف فوري لأي أفكار انتحارية أو إيذاء نفس باللغتين العربية والإنجليزية.
-* اعتراض فوري للاستفسار وتقديم أرقام الطوارئ والدعم النفسي المجاني على مدار 24 ساعة (خط الدعم النفسي في مصر `08008880700`، الأمانة العامة للصحة النفسية `16328`، الخط الدولي `988`).
+### 3. Somatic Grounding & Interactive Wellness Tools
+- **Guided Breathing Modals**: Guided visual pacing for 4-7-8 and Box Breathing techniques targeting vagus nerve stimulation.
+- **Somatic Relaxation**: Step-by-step interactive flows for 5-4-3-2-1 Sensory Grounding and Progressive Muscle Relaxation (PMR).
+- **In-Browser Ambient Audio DSP**: Real-time synthesized acoustic environments (Gentle Rain, Ocean Surf, 432Hz Zen harmonics) computed entirely in the browser using the Web Audio API without external audio assets.
+- **Standardized Assessments**: GAD-7 (Anxiety), PHQ-9 (Depression), and ISI (Insomnia) screening tests with instant scoring and Markdown report export.
+- **Worry Dump & Mood Tracker**: Daily emotional pulse logging with trajectory analytics and a symbolic worry release feature.
 
-### 4. الأدوات والخدمات التفاعلية (Interactive Wellness Tools)
-* **🧘 تمرين التنفس (4-7-8 Breathing Tool)**: ويدجت تفاعلي دائري متحرك في الشريط الجانبي لتهدئة الجهاز العصبي ونوبات الهلع.
-* **📝 الفحوصات والمقاييس النفسية المقننة (Clinical Assessments)**:
-  * مقياس القلق المعمم (**GAD-7**).
-  * مقياس شدة الأرق واضطرابات النوم (**ISI**).
-  * تحليل فوري للدرجة وزر لمناقشة النتيجة مع الذكاء الاصطناعي.
-* **🎧 صوتيات الاسترخاء والتركيز (Ambient Soundscapes)**:
-  * مولدة مباشرة عبر **Web Audio API** بدون أي ملفات خارجية (مطر هادئ 🌧️، أمواج بحر 🌊، تردد ثيتا 432Hz التأملي 🧘).
-* **🎙️ التحدث الصوتي (Speech-to-Text)**: إدخال صوتي بالعامية أو الفصحى أو الإنجليزية.
-* **🔊 القراءة الصوتية (TTS)**: استماع للردود بنقرة واحدة عبر `window.speechSynthesis`.
-* **📋 نسخ وتصدير المحادثات (Copy & Export)**: نسخ الرسائل بنقرة واحدة وتصدير المحادثة بالكامل كملف `Markdown (.md)`.
-
-### 5. واجهة المستخدم وهوية كلود (Anthropic Claude Aesthetic)
-* **لوحة الألوان الترابية الدافئة**: درجات الفحم الدافئ (`#1f1e1d` و `#272522`) مع لون التيراكوتا الأيقوني (`#cc785c`).
-* **الخط العربي الفاخر**: خط **IBM Plex Sans Arabic** الأصلي بكافة أوزانه، بجانب خط **Newsreader Serif** للعناوين الإنجليزية.
-* **نظام تسجيل الدخول والحسابات (Auth System)**: تسجيل دخول وإنشاء حساب وحفظ البيانات محلياً في المتصفح (`localStorage`) مع إمكانية تسجيل الخروج.
-* **تجاوب كامل لكافة الشاشات (Full Responsiveness)**: هيدر مخصص للهواتف، وقائمة جانبية تنزلق بسلاسة كـ Off-canvas Drawer.
+### 4. Resilient Offline-First Architecture
+- Seamless fallback to `localStorage` when offline or unauthenticated.
+- Cloud synchronization with Neon PostgreSQL upon authentication using salted PBKDF2 cryptography and signed JWT bearer tokens.
+- Serverless-optimized connection pooling (`NullPool`) to eliminate database connection exhaustion during cold starts.
 
 ---
 
-## 📂 هيكل المشروع (Project Directory Tree)
+## 📁 Repository Structure
 
 ```text
 frontend NLP project/
-├── backend/
-│   ├── data/
-│   │   └── data.json              # قاعدة البيانات الأساسية (905 أسئلة وأجوبة معتمدة)
-│   ├── routes/
-│   │   └── predict.py             # مسارات الـ API (/predict, /predict/stream, /health)
-│   ├── services/
-│   │   ├── clinical_service.py    # محرك المراجع الطبية وربط PubMed / NIMH / WHO
-│   │   ├── llm_service.py         # محرك DeepSeek V4 Flash، الأمان السريري، والبث SSE
-│   │   └── model_service.py       # محرك الـ NLP الدلالي ومطابقة جيب التمام
-│   ├── utils/
-│   │   ├── preprocessing.py       # معالجة النصوص العربية، إزالة التشكيل، والكلمات الاستبعادية
-│   │   └── vectorizer.py          # أدوات مصفوفات TF-IDF
-│   ├── .env                       # متغيرات البيئة ومفاتيح الـ API السرية
-│   ├── .env.example               # نموذج متغيرات البيئة الآمن للمشاركة
-│   ├── main.py                    # تطبيق FastAPI، إعدادات CORS، وإدارة دورة الحياة
-│   ├── requirements.txt           # متطلبات بايثون
-│   └── test_api.py                # حزمة الاختبارات المؤتمتة الشاملة للباك إند
-│
-├── CHAT BOT/
-│   ├── public/
-│   │   └── fonts/                 # خطوط IBM Plex Sans Arabic المستخرجة محلياً
+├── CHAT BOT/                           # React 19 Frontend (Vite)
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── AmbientSoundModal.jsx # مشغل صوتيات الاسترخاء الحي عبر Web Audio API
-│   │   │   ├── AssessmentModal.jsx   # مقاييس القلق والأرق المقننة (GAD-7 & ISI)
-│   │   │   ├── AuthPage.jsx          # صفحة تسجيل الدخول وإنشاء الحساب
-│   │   │   ├── BreathingModal.jsx    # ويدجت تمرين التنفس المهدئ (4-7-8)
-│   │   │   ├── ChatsPage.jsx         # شاشة إدارة وتصفح سجل المحادثات السابقة
-│   │   │   ├── ChatWindow.jsx        # نافذة المحادثة، محرك Markdown، وشارات المراجع
-│   │   │   ├── SearchModal.jsx       # نافذة البحث السريع بالمحادثات (Ctrl+K)
-│   │   │   └── Sidebar.jsx           # القائمة الجانبية بنمط كلود، التمارين، والبروفايل
-│   │   ├── App.jsx                   # إدارة الحالة المركزية، البث، والمصادقة
-│   │   └── main.jsx                  # نقطة انطلاق تطبيق React
-│   ├── index.html                 # ملف البداية واستيراد خط Newsreader
-│   ├── package.json               # حزم الفرونت إند (React 19, Vite, Marked)
-│   ├── style.css                  # نظام التصميم المتكامل (Tokens, Claude Theme, RTL)
-│   └── vite.config.js             # إعدادات مجمع Vite
+│   │   ├── components/                 # Modular UI Components
+│   │   │   ├── auth/                   # FormInput, AuthLoginForm, AuthSignupForm
+│   │   │   ├── chat/                   # ChatHeader, MessageBubble, ClinicalCard, ChatInputArea
+│   │   │   ├── sidebar/                # SidebarHeader, NavGroup, ConversationList, UserProfile
+│   │   │   ├── AppModals.jsx           # Unified modal container
+│   │   │   ├── AuthPage.jsx            # Authentication dialog
+│   │   │   ├── ChatWindow.jsx          # Active conversation view
+│   │   │   ├── Sidebar.jsx             # Responsive navigation drawer
+│   │   │   ├── AssessmentModal.jsx     # Clinical questionnaires (GAD-7, PHQ-9, ISI)
+│   │   │   ├── BreathingModal.jsx      # 4-7-8, Box, PMR, & Grounding modal
+│   │   │   ├── AmbientSoundModal.jsx   # Web Audio synthesizer controls
+│   │   │   ├── MoodTrackerModal.jsx    # Daily mood logging modal
+│   │   │   ├── WorryDumpModal.jsx      # Mental decluttering box
+│   │   │   └── SearchModal.jsx         # Global Ctrl+K conversation search
+│   │   ├── hooks/                      # Custom React Hooks
+│   │   │   ├── useConversations.js     # Thread management & cloud sync
+│   │   │   ├── useChatStream.js        # SSE stream dispatcher & buffer
+│   │   │   ├── useModalManager.js      # Modal state coordinator
+│   │   │   ├── useSpeechRecognition.js # Web Speech API voice-to-text
+│   │   │   ├── useSpeechSynthesis.js   # Browser SpeechSynthesis TTS
+│   │   │   ├── useBreathingCycle.js    # Somatic timer engine
+│   │   │   ├── useAuthForm.js          # Auth form state & validation
+│   │   │   └── useEscapeKey.js         # Universal Esc listener
+│   │   ├── services/                   # Business Logic & Infrastructure Services
+│   │   │   ├── conversationService.js  # Local caching & REST cloud persistence
+│   │   │   ├── chatStreamService.js    # SSE buffer parser & fallback fetch
+│   │   │   ├── ambientAudioService.js  # Web Audio API sound synthesizer
+│   │   │   ├── assessmentCalculator.js # Questionnaire clinical scoring logic
+│   │   │   ├── moodStorage.js          # Mood trajectory records & analytics
+│   │   │   ├── worryStorage.js         # Private note storage & burn audio sfx
+│   │   │   ├── authService.js          # Authentication coordinator
+│   │   │   ├── authStorage.js          # Local user state manager
+│   │   │   └── authApi.js              # Remote auth HTTP client
+│   │   ├── data/                       # Static Questionnaires & Categories
+│   │   ├── utils/                      # Pure Markdown Exporters
+│   │   ├── App.jsx                     # Composition Root
+│   │   ├── main.jsx                    # Application Entrypoint
+│   │   └── style.css                   # Claude-inspired CSS Design Tokens
+│   ├── package.json
+│   └── vite.config.js
 │
-├── IBM_Plex_Sans_Arabic.zip       # حزمة الخط العربي الأصلية
-├── run_project.bat                # مشغل التشغيل التلقائي بنقرة واحدة لنظام ويندوز
-├── README.md                      # هذا الملف التوثيقي الشامل
-└── .gitignore                     # استبعاد الحزم المؤقتة ومفاتيح البيئة
+├── backend/                            # FastAPI Backend Engine
+│   ├── routes/
+│   │   ├── predict.py                  # /predict, /predict/stream, /health, /topics
+│   │   ├── auth_routes.py              # /api/auth/register, /login, /me
+│   │   └── conversation_routes.py      # /api/conversations CRUD
+│   ├── services/
+│   │   ├── model_service.py            # TF-IDF vectorizer & Cosine Similarity
+│   │   ├── llm_service.py              # DeepSeek client & safety filters
+│   │   └── clinical_service.py         # PubMed NCBI literature client
+│   ├── utils/
+│   │   ├── security.py                 # PBKDF2 hashing, salt & JWT tokens
+│   │   ├── dialect_mapper.py           # Egyptian Arabic dialect normalizer
+│   │   └── preprocessing.py            # Text cleaning & tokenization
+│   ├── database.py                     # SQLAlchemy Engine & get_db Dependency
+│   ├── models.py                       # SQLAlchemy ORM Entities (User, Conv, Msg)
+│   ├── main.py                         # FastAPI Server Entrypoint
+│   └── test_api.py                     # Automated Integration Test Suite
+│
+├── api/
+│   └── index.py                        # Vercel Serverless Entrypoint Handler
+├── data/
+│   └── data.json                       # 905 Clinically Reviewed QA Pairs
+├── vercel.json                         # Vercel Deployment Configuration
+├── requirements.txt                    # Python Production Dependencies
+└── LICENSE                             # MIT License
 ```
 
 ---
 
-## 🚀 التشغيل السريع بنقرة واحدة (Quick Start)
+## 🚀 Quickstart & Local Setup
 
-على نظام تشغيل Windows، اضغط ضغطاً مزدوجاً على الملف:
-```bat
-run_project.bat
-```
-يقوم هذا السكربت تلقائياً بـ:
-1. التحقق من تثبيت Python و Node.js.
-2. تشغيل سيرفر الباك إند FastAPI على المنفذ `8000`.
-3. تشغيل واجهة الفرونت إند Vite على المنفذ `5173`.
-4. فتح الموقع مباشرة في متصفحك الافتراضي.
+### Prerequisites
+- **Node.js** v18+ and **npm**
+- **Python** 3.10+ (tested up to 3.13)
+- Git
 
 ---
 
-## 🛠️ التشغيل اليدوي (Manual Setup)
+### 1. Backend Setup
 
-### 1. تشغيل الباك إند (Backend)
 ```bash
-cd backend
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-```
-* **فحص الحالة**: `http://127.0.0.1:8000/health`
-* **توثيق Swagger التفاعلي**: `http://127.0.0.1:8000/docs`
+# Navigate to the repository root
+cd "frontend NLP project"
 
-### 2. تشغيل الفرونت إند (Frontend)
+# Create and activate a Python virtual environment
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS / Linux:
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create a local .env file
+cp .env.example .env   # Or set DATABASE_URL, LLM_API_KEY, etc.
+```
+
+#### Run Backend Server:
 ```bash
-cd "CHAT BOT"
-npm install
-npm run dev
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-* **رابط الموقع**: `http://127.0.0.1:5173`
+API Documentation will be live at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
----
-
-## 🧪 فحص واختبار النظام (Automated Tests)
-
-للتحقق من سلامة الباك إند، محرك الـ NLP، كاشف الأزمات، والاتصال الطبي:
+#### Run Backend Test Suite:
 ```bash
 python backend/test_api.py
 ```
 
-لاختبار بناء حزمة الإنتاج للفرونت إند وضمان خلوه من أي أخطاء:
+---
+
+### 2. Frontend Setup
+
 ```bash
+# Navigate to the frontend directory
 cd "CHAT BOT"
+
+# Install NPM dependencies
+npm install
+
+# Start Vite development server
+npm run dev
+```
+The frontend will be accessible at: [http://localhost:5173](http://localhost:5173)
+
+#### Build for Production:
+```bash
 npm run build
 ```
 
 ---
 
-## 📡 واجهات الـ API (API Endpoints)
+## 🔒 Security & Crisis Protocols
 
-### 1. التدفق الحي بالذكاء الاصطناعي والمراجع السريرية:
-`POST /predict/stream`
-* **نوع البيانات**: `text/event-stream` (Server-Sent Events)
-* **المدخلات**:
-```json
-{
-  "text": "مش عارف أنام وعندي أرق وتفكير مفرط",
-  "topic": "sleep",
-  "history": [
-    { "role": "user", "content": "أنا قلقان من بكرة" },
-    { "role": "assistant", "content": "سلامتك، أنا جنبك وواثق فيك." }
-  ]
-}
-```
-* **المخرجات المتدفقة**:
-  * قطع النصوص: `data: {"delta": "سلامتك.. "}`
-  * البيانات الطبية المعتمدة:
-```json
-data: {
-  "meta": {
-    "topic": "sleep",
-    "confidence": 0.95,
-    "enhanced_by_ai": true,
-    "clinical_reference": {
-      "source": "الأكاديمية الأمريكية لطب النوم (AASM)",
-      "title": "الدليل الإكلينيكي لعلاج الأرق السلوكي المعرفي (CBT-I)",
-      "citation": "AASM / Ann Intern Med (PubMed PMC ID: 13530075)",
-      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC13530075/"
-    }
-  }
-}
-data: [DONE]
-```
+> [!CAUTION]
+> **Not a Substitute for Emergency Medical Care**  
+> Psyc is an informational and psycho-educational AI platform. It is not licensed to prescribe medications or establish formal medical diagnoses.
 
-### 2. فحص حالة السيرفر:
-`GET /health`
-* **المخرجات**:
-```json
-{
-  "status": "ok",
-  "dataset_size": 905,
-  "vectorizer_ready": true,
-  "available_topics": ["anxiety", "motivation", "sleep", "stress", "study"],
-  "llm_enabled": true,
-  "clinical_service_ready": true
-}
-```
+The system incorporates algorithmic emergency intercept triggers:
+- Any query expressing self-harm, suicidal intent, or imminent danger immediately bypasses generative processing and displays local emergency hotlines:
+  - **Egypt Crisis Hotline (General Secretariat of Mental Health)**: `16328`
+  - **National Mental Health Support Line**: `08008880700`
+  - **US / International Suicide & Crisis Lifeline**: `988`
 
 ---
 
-## 🔒 الأمان وحماية البيانات (Security Best Practices)
+## 📄 License
 
-1. **حفظ المفاتيح في الباك إند**: مفتاح DeepSeek ومسارات الـ API محفوظة حصراً داخل `backend/.env` ولا تتسرب مطلقاً لكود المتصفح أو للعموم.
-2. **الخصوصية المحلية**: المحادثات وسجل الحسابات مشفرة وتُحفظ محلياً على جهاز المستخدم عبر `localStorage`.
-3. **التشخيص الطبي**: التطبيق يقدم نصائح دعم نفسي سلوكي معرفي (Psychoeducation) ولا يصف أدوية كيميائية، مع توجيه الحالات الحرجة فوراً للخطوط الساخنة والمستشفيات المعتمدة.
+This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
 
----
-
-## 📄 الترخيص (License)
-هذا المشروع مصمم ومطور لأغراض الدعم النفسي والتعليمي والبحث العلمي في الذكاء الاصطناعي ومعالجة اللغات الطبيعية (NLP).
+Developed with care by **Mohamed Tayal** ([@aiengmohamedtayal-netizen](https://github.com/aiengmohamedtayal-netizen)).

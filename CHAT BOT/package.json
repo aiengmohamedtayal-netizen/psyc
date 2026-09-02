@@ -1,8 +1,15 @@
 {
-  "name": "chatgpt-clone",
+  "name": "psyc-frontend",
+  "version": "2.0.0",
+  "description": "Production-grade mental health & cognitive behavioral therapy companion web app built with React 19 and Vite.",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
+  "author": "Mohamed Tayal <aiengmohamedtayal@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiengmohamedtayal-netizen/psyc.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
