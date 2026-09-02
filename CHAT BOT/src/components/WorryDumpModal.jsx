@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react'
+import {
+  loadWorryNotes,
+  createWorryNote,
+  deleteWorryNote,
+  playBurnSfx,
+} from '../services/worryStorage.js'
 
-const WORRY_STORAGE_KEY = 'stress_ai_worry_notes'
-
+/**
+ * Mental De-cluttering & Worry Dump Modal.
+ * Allows users to symbolically burn persistent worries or archive them to a private notes diary.
+ */
 export default function WorryDumpModal({ isOpen, onClose }) {
   const [worryText, setWorryText] = useState('')
   const [isBurning, setIsBurning] = useState(false)
   const [burnedSuccess, setBurnedSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState('write') // 'write' | 'archive'
-  const [savedNotes, setSavedNotes] = useState(() => {
-    try {
-      const data = localStorage.getItem(WORRY_STORAGE_KEY)
-      return data ? JSON.parse(data) : []
-    } catch {
-      return []
-    }
-  })
+  const [savedNotes, setSavedNotes] = useState(loadWorryNotes)
 
   useEffect(() => {
     if (!isOpen) {
@@ -27,39 +28,9 @@ export default function WorryDumpModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
-  const playBurnSound = () => {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      if (!AudioCtx) return
-      const ctx = new AudioCtx()
-      const bufferSize = Math.floor(ctx.sampleRate * 0.9)
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
-      const data = buffer.getChannelData(0)
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * 0.35
-      }
-      const noise = ctx.createBufferSource()
-      noise.buffer = buffer
-
-      const filter = ctx.createBiquadFilter()
-      filter.type = 'lowpass'
-      filter.frequency.setValueAtTime(350, ctx.currentTime)
-      filter.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.85)
-
-      const gain = ctx.createGain()
-      gain.gain.setValueAtTime(0.25, ctx.currentTime)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.85)
-
-      noise.connect(filter)
-      filter.connect(gain)
-      gain.connect(ctx.destination)
-      noise.start()
-    } catch {}
-  }
-
   const handleBurnThoughts = () => {
     if (!worryText.trim()) return
-    playBurnSound()
+    playBurnSfx()
     setIsBurning(true)
     setTimeout(() => {
       setIsBurning(false)
@@ -71,32 +42,15 @@ export default function WorryDumpModal({ isOpen, onClose }) {
   const handleSaveToArchive = () => {
     const clean = worryText.trim()
     if (!clean) return
-    const newNote = {
-      id: Date.now(),
-      text: clean,
-      date: new Date().toLocaleDateString('ar-EG', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    }
-    const updated = [newNote, ...savedNotes]
+    const updated = createWorryNote(savedNotes, clean)
     setSavedNotes(updated)
-    try {
-      localStorage.setItem(WORRY_STORAGE_KEY, JSON.stringify(updated))
-    } catch {}
     setWorryText('')
     setActiveTab('archive')
   }
 
   const handleDeleteNote = (id) => {
-    const updated = savedNotes.filter((n) => n.id !== id)
+    const updated = deleteWorryNote(savedNotes, id)
     setSavedNotes(updated)
-    try {
-      localStorage.setItem(WORRY_STORAGE_KEY, JSON.stringify(updated))
-    } catch {}
   }
 
   return (
@@ -106,6 +60,8 @@ export default function WorryDumpModal({ isOpen, onClose }) {
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose()
       }}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="search-modal-content"
@@ -121,10 +77,12 @@ export default function WorryDumpModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           className="close-search-btn"
           onClick={onClose}
           style={{ position: 'absolute', top: '16px', right: '16px' }}
           title="إغلاق (Esc)"
+          aria-label="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -207,6 +165,7 @@ export default function WorryDumpModal({ isOpen, onClose }) {
                   لقد أفرغت هذه الأفكار من عقلك الآن ووضعتها خارجك. دعها ترحل وتنفس بهدوء؛ عقلك يستحق الراحة الآن.
                 </p>
                 <button
+                  type="button"
                   onClick={() => setBurnedSuccess(false)}
                   className="auth-submit-btn"
                   style={{ width: 'auto', padding: '8px 24px' }}
@@ -316,6 +275,7 @@ export default function WorryDumpModal({ isOpen, onClose }) {
                         {note.date}
                       </span>
                       <button
+                        type="button"
                         onClick={() => handleDeleteNote(note.id)}
                         style={{
                           background: 'none',

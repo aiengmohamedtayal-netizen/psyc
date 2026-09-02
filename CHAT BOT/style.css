@@ -1939,3 +1939,357 @@ html, body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MODERN CHAT WINDOW, INPUT BAR & SUGGESTIONS REDESIGN
+   ═══════════════════════════════════════════════════════════ */
+
+/* Full-height Chat Window Container */
+.chat-window-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--bg-main, #1f1e1d);
+  position: relative;
+}
+
+/* Scrollable Messages & Welcome Hero Container */
+.chat-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px 24px;
+}
+
+.chat-content-max {
+  width: 100%;
+  max-width: 768px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Empty-State Welcome Hero */
+.empty-hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 16px 20px;
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.empty-hero-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  display: inline-block;
+  animation: floatIcon 3s ease-in-out infinite alternate;
+}
+
+@keyframes floatIcon {
+  from { transform: translateY(0); }
+  to { transform: translateY(-6px); }
+}
+
+.empty-hero-title {
+  font-family: var(--font-arabic), var(--font-serif);
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fbf9f5;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.empty-hero-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted, #a39e93);
+  max-width: 520px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* Modern Suggestions Grid */
+.modern-suggestions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+}
+
+.suggestion-category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent, #cc785c);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0 4px;
+}
+
+.suggestion-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.suggestion-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface, #272522);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  color: var(--text-main, #ece7de);
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.86rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  text-align: right;
+  direction: rtl;
+}
+
+.suggestion-pill-btn:hover {
+  background: var(--bg-surface-elevated, #2f2d29);
+  border-color: var(--accent, #cc785c);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(204, 120, 92, 0.18);
+}
+
+.suggestion-pill-arrow {
+  color: var(--accent, #cc785c);
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+.suggestion-pill-btn:hover .suggestion-pill-arrow {
+  transform: translateX(-3px);
+}
+
+/* Modern Full-Width Chat Input Dock */
+.modern-input-dock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 20px 18px;
+  background: linear-gradient(180deg, transparent 0%, rgba(31, 30, 29, 0.85) 25%, var(--bg-main, #1f1e1d) 100%);
+  position: relative;
+  z-index: 10;
+}
+
+.modern-input-wrapper {
+  width: 100%;
+  max-width: 768px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Filter pills above input */
+.modern-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 4px 4px;
+  scrollbar-width: none;
+}
+
+.modern-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  background: var(--bg-surface, #272522);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  color: var(--text-muted, #a39e93);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.filter-pill:hover {
+  border-color: var(--accent, #cc785c);
+  color: #ffffff;
+}
+
+.filter-pill.active {
+  background: rgba(204, 120, 92, 0.16);
+  border-color: var(--accent, #cc785c);
+  color: var(--accent, #cc785c);
+  font-weight: 600;
+}
+
+/* Rounded-2xl Smooth Pill Input Box */
+.modern-input-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--bg-input, #2a2825);
+  border: 1px solid var(--border-input, rgba(255, 255, 255, 0.12));
+  border-radius: 18px;
+  padding: 10px 14px 10px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.modern-input-card:focus-within {
+  border-color: var(--accent, #cc785c);
+  box-shadow: 0 0 0 2px rgba(204, 120, 92, 0.2), 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+.modern-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  resize: none;
+  max-height: 180px;
+  min-height: 26px;
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+
+.modern-textarea::placeholder {
+  color: var(--text-muted, #a39e93);
+  opacity: 0.7;
+}
+
+.modern-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+/* Mic Action Button */
+.modern-mic-btn {
+  background: transparent;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  color: var(--text-muted, #a39e93);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modern-mic-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.modern-mic-btn.listening {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
+  animation: pulseRecording 1.4s infinite;
+}
+
+@keyframes pulseRecording {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Terracotta Send Button */
+.modern-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-subtle, #757066);
+  cursor: not-allowed;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modern-send-btn.active {
+  background: var(--accent, #cc785c);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(204, 120, 92, 0.4);
+}
+
+.modern-send-btn.active:hover {
+  background: var(--accent-hover, #d98266);
+  transform: scale(1.05);
+  box-shadow: 0 4px 18px rgba(204, 120, 92, 0.55);
+}
+
+.modern-send-btn.active:active {
+  transform: scale(0.96);
+}
+
+/* Disclaimer Text */
+.modern-disclaimer-text {
+  font-size: 0.76rem;
+  color: var(--text-subtle, #757066);
+  text-align: center;
+  padding: 0 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .chat-body-scroll {
+    padding: 12px 14px 20px;
+  }
+  .empty-hero-title {
+    font-size: 1.6rem;
+  }
+  .empty-hero-subtitle {
+    font-size: 0.88rem;
+  }
+  .modern-input-dock {
+    padding: 8px 12px 14px;
+  }
+  .suggestion-pill-btn {
+    font-size: 0.82rem;
+    padding: 7px 11px;
+  }
+}
+
+

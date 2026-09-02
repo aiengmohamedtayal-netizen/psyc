@@ -1,27 +1,20 @@
 import React, { useState, useEffect } from 'react'
+import {
+  MOOD_LEVELS,
+  loadMoodLogs,
+  recordMoodEntry,
+  calculateAverageMood,
+} from '../services/moodStorage.js'
 
-const MOOD_STORAGE_KEY = 'stress_ai_mood_logs'
-
-const MOODS = [
-  { level: 1, emoji: '😫', label: 'إرهاق شديد', color: '#ef4444' },
-  { level: 2, emoji: '😟', label: 'قلق وتوتر', color: '#f97316' },
-  { level: 3, emoji: '😐', label: 'مستقر / هادئ', color: '#eab308' },
-  { level: 4, emoji: '🙂', label: 'جيد وإيجابي', color: '#84cc16' },
-  { level: 5, emoji: '😊', label: 'مرتاح ومبتهج', color: '#22c55e' },
-]
-
+/**
+ * Daily Mood Tracker Modal.
+ * Records emotional state ratings (1-5), contextual notes, and trajectory history.
+ */
 export default function MoodTrackerModal({ isOpen, onClose }) {
   const [selectedLevel, setSelectedLevel] = useState(3)
   const [note, setNote] = useState('')
   const [loggedToday, setLoggedToday] = useState(false)
-  const [moodLogs, setMoodLogs] = useState(() => {
-    try {
-      const data = localStorage.getItem(MOOD_STORAGE_KEY)
-      return data ? JSON.parse(data) : []
-    } catch {
-      return []
-    }
-  })
+  const [moodLogs, setMoodLogs] = useState(loadMoodLogs)
 
   useEffect(() => {
     if (isOpen) {
@@ -42,33 +35,15 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   const handleSaveMood = () => {
-    const todayStr = new Date().toISOString().slice(0, 10)
-    const newEntry = {
-      id: Date.now(),
+    const updated = recordMoodEntry(moodLogs, {
       level: selectedLevel,
-      note: note.trim(),
-      dateStr: todayStr,
-      displayDate: new Date().toLocaleDateString('ar-EG', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      }),
-    }
-
-    const filtered = moodLogs.filter((m) => m.dateStr !== todayStr)
-    const updated = [newEntry, ...filtered].slice(0, 30) // Keep last 30 entries
+      note,
+    })
     setMoodLogs(updated)
-    try {
-      localStorage.setItem(MOOD_STORAGE_KEY, JSON.stringify(updated))
-    } catch {}
     setLoggedToday(true)
   }
 
-  // Calculate average mood
-  const avgMood =
-    moodLogs.length > 0
-      ? (moodLogs.reduce((acc, cur) => acc + cur.level, 0) / moodLogs.length).toFixed(1)
-      : null
+  const avgMood = calculateAverageMood(moodLogs)
 
   return (
     <div
@@ -77,6 +52,8 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose()
       }}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="search-modal-content"
@@ -92,10 +69,12 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          type="button"
           className="close-search-btn"
           onClick={onClose}
           style={{ position: 'absolute', top: '16px', right: '16px' }}
           title="إغلاق (Esc)"
+          aria-label="Close"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -103,7 +82,6 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
           </svg>
         </button>
 
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '18px' }}>
           <span style={{ fontSize: '2.2rem' }}>📊</span>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.65rem', color: '#fbf9f5', margin: '4px 0 6px' }}>
@@ -120,7 +98,7 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
             كيف تشعر في هذه اللحظة؟
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-            {MOODS.map((m) => {
+            {MOOD_LEVELS.map((m) => {
               const isSelected = selectedLevel === m.level
               return (
                 <button
@@ -189,7 +167,7 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
           {loggedToday ? '✓ تم حفظ المزاج اليومي بنجاح' : 'حفظ مزاج اليوم ➔'}
         </button>
 
-        {/* History / Trajectory Overview */}
+        {/* History Overview */}
         <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#fbf9f5' }}>
@@ -209,7 +187,7 @@ export default function MoodTrackerModal({ isOpen, onClose }) {
               </div>
             ) : (
               moodLogs.map((log) => {
-                const moodObj = MOODS.find((m) => m.level === log.level) || MOODS[2]
+                const moodObj = MOOD_LEVELS.find((m) => m.level === log.level) || MOOD_LEVELS[2]
                 return (
                   <div
                     key={log.id}
