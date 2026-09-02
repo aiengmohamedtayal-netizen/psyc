@@ -1,0 +1,50 @@
+# Node / frontend
+CHAT BOT/node_modules/
+CHAT BOT/dist/
+node_modules/
+dist/
+.vite/
+
+# Python / backend
+backend/__pycache__/
+backend/**/*.pyc
+backend/.env
+.env
+*.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+backend/stress_ai.db
+Project/**/__pycache__/
+Project/**/*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Logs
+backend/*.log
+CHAT BOT/*.log
+*.log
+
+# Local tooling & IDE
+.playwright-cli/
+.playwright-input.js
+.vscode/
+.idea/
+
+# OS files
+desktop.ini
+folderico-red.ico
+Thumbs.db
+.DS_Store
+
+# Archives
+*.zip
+*.tar.gz

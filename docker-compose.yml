@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stress_ai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://backend.sovereigneg.com/v1}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-v4-flash}
+      - ALLOWED_ORIGINS=http://localhost,http://127.0.0.1,http://localhost:5173,http://localhost:80
+    volumes:
+      - ./backend/stress_ai.db:/app/stress_ai.db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./CHAT BOT
+      dockerfile: Dockerfile
+    container_name: stress_ai_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
