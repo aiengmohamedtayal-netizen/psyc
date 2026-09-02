@@ -7,6 +7,10 @@
 [![Neon PostgreSQL](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=flat-square&logo=postgresql)](https://neon.tech)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
+<p align="center">
+  <img src="docs/preview.png" alt="Psyc Application Preview" width="100%" style="border-radius: 10px;" />
+</p>
+
 **Psyc** is a production-grade, bilingual mental health and stress assistance platform built on cognitive behavioral therapy (CBT) principles, evidence-based psychiatric literature, and somatic grounding exercises.
 
 Designed with an editorial, warm aesthetic inspired by Anthropic Claude, the application operates on a decoupled cloud architecture: an ultra-fast React 19 single-page application served via Cloudflare Pages edge CDN, communicating with an asynchronous FastAPI serverless backend on Vercel backed by Neon PostgreSQL.
