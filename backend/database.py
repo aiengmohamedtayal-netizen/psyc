@@ -1,6 +1,7 @@
 """
-Database & Authentication Module (SQLAlchemy + SQLite).
-Provides server-side persistence for users, conversation sessions, and PubMed clinical caching.
+Database & Authentication Module (SQLAlchemy + Neon Serverless PostgreSQL / SQLite Fallback).
+Provides persistent storage for users, conversation sessions, and PubMed clinical citations
+with connection pooling (NullPool) optimized for Serverless / Ephemeral runtimes.
 """
 
 import os
@@ -8,21 +9,46 @@ import time
 import hashlib
 import hmac
 import jwt
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Generator
+from dotenv import load_dotenv
+
 from sqlalchemy import create_engine, Column, String, Integer, Float, Text, Boolean
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.pool import NullPool
 
-if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
-    DATABASE_FILE = "/tmp/stress_ai.db"
+load_dotenv()
+
+# Read DATABASE_URL from environment (Neon / Supabase / PostgreSQL)
+raw_db_url = os.getenv("DATABASE_URL")
+
+if raw_db_url:
+    # Modernize postgres:// to postgresql:// for SQLAlchemy 2.0 compatibility
+    if raw_db_url.startswith("postgres://"):
+        DATABASE_URL = raw_db_url.replace("postgres://", "postgresql://", 1)
+    else:
+        DATABASE_URL = raw_db_url
+
+    # Serverless NullPool: avoid exhausting Neon connection pool limits on cold starts
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=NullPool,
+        connect_args={
+            "sslmode": "require",
+            "connect_timeout": 10
+        }
+    )
 else:
-    DATABASE_FILE = os.path.join(os.path.dirname(__file__), "stress_ai.db")
+    # Graceful local / ephemeral SQLite fallback
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        DATABASE_FILE = "/tmp/stress_ai.db"
+    else:
+        DATABASE_FILE = os.path.join(os.path.dirname(__file__), "stress_ai.db")
+    DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
 
-DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
-
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "stress_ai_secret_super_secure_key_2026")
-ALGORITHM = "HS256"
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -65,8 +91,28 @@ class PubMedCache(Base):
     cached_at = Column(Float, default=time.time)
 
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Create tables if not existing
+def init_db():
+    Base.metadata.create_all(bind=engine)
+
+
+try:
+    init_db()
+except Exception:
+    pass
+
+
+def get_db() -> Generator[Session, None, None]:
+    """Dependency for safe session lifecycle management in route handlers."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "stress_ai_secret_super_secure_key_2026")
+ALGORITHM = "HS256"
 
 
 def hash_password(password: str, salt: Optional[str] = None) -> tuple[str, str]:

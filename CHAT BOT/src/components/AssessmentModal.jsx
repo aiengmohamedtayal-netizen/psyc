@@ -48,6 +48,34 @@ const ASSESSMENTS = {
       return { level: 'أرق سريري يحتاج لتدخل (Clinical Insomnia)', color: '#ef4444', advice: 'جودة نومك منخفضة وتؤثر على صحتك. بروتوكول CBT-I هو الحل الأمثل لك.' }
     },
   },
+  phq9: {
+    title: 'مقياس تقييم الاكتئاب السريري (PHQ-9 Depression Scale)',
+    description: 'المقياس السريري القياسي المعتمد لتقييم حدة الأعراض الاكتئابية خلال الأسبوعين الماضيين.',
+    questions: [
+      'قلة الاهتمام أو انعدام المتعة في القيام بالأشياء والأنشطة؟',
+      'الشعور بالإحباط، الاكتئاب، أو اليأس والعجز؟',
+      'صعوبة في النوم، الاستيقاظ المتكرر، أو الإفراط في النوم؟',
+      'الشعور بالتعب والإجهاد ونقص الطاقة الحيوية؟',
+      'ضعف الشهية أو الإفراط في تناول الطعام بشكل قهري؟',
+      'الشعور بالسوء تجاه نفسك أو أنك شخص فاشل أو خذلت أسرتك؟',
+      'صعوبة في التركيز، كالقراءة أو مشاهدة التلفزيون أو العمل؟',
+      'البطء الشديد في الحركة أو الكلام لدرجة لاحظها الآخرون، أو التململ الزائد؟',
+      'أفكار بأنك تفضل لو كنت ميتاً، أو تفكير في إيذاء نفسك بأي شكل؟',
+    ],
+    options: [
+      { text: 'أبداً (Not at all)', score: 0 },
+      { text: 'عدة أيام (Several days)', score: 1 },
+      { text: 'أكثر من نصف الأيام (Half days)', score: 2 },
+      { text: 'يومياً تقريباً (Nearly every day)', score: 3 },
+    ],
+    getSeverity: (total) => {
+      if (total <= 4) return { level: 'لا يوجد اكتئاب / أعراض ضئيلة (Minimal)', color: '#22c55e', advice: 'أعراضك في النطاق الطبيعي المستقر، حافظ على توازنك اليومي.' }
+      if (total <= 9) return { level: 'أعراض اكتئابية خفيفة (Mild Depression)', color: '#eab308', advice: 'تختبر إرهاقاً نفسياً خفيفاً. نوصي بالتنشيط السلوكي والرياضة وتمارين الاسترخاء.' }
+      if (total <= 14) return { level: 'اكتئاب متوسط الشدة (Moderate Depression)', color: '#f97316', advice: 'الأعراض تعيق روتينك اليومي. نوصي بمراجعة معالج نفسي مختص بجلسات CBT.' }
+      if (total <= 19) return { level: 'اكتئاب متوسط إلى شديد (Moderately Severe)', color: '#ea580c', advice: 'تحتاج إلى دعم نفسي منظم ومتخصص لمساندتك على تجاوز هذه الفترة.' }
+      return { level: 'اكتئاب حاد سريري (Severe Depression)', color: '#ef4444', advice: 'حالة إكلينيكية تستوجب التدخل الفوري من طبيب نفسي مرخص.' }
+    },
+  },
 }
 
 export default function AssessmentModal({ isOpen, onClose, onStartChatWithResult }) {
@@ -111,13 +139,19 @@ export default function AssessmentModal({ isOpen, onClose, onStartChatWithResult
             className={`auth-tab ${activeTest === 'gad7' ? 'active' : ''}`}
             onClick={() => handleReset('gad7')}
           >
-            مقياس القلق (GAD-7)
+            القلق (GAD-7)
+          </button>
+          <button
+            className={`auth-tab ${activeTest === 'phq9' ? 'active' : ''}`}
+            onClick={() => handleReset('phq9')}
+          >
+            الاكتئاب (PHQ-9)
           </button>
           <button
             className={`auth-tab ${activeTest === 'isi' ? 'active' : ''}`}
             onClick={() => handleReset('isi')}
           >
-            مقياس الأرق (ISI)
+            الأرق (ISI)
           </button>
         </div>
 
@@ -209,6 +243,57 @@ export default function AssessmentModal({ isOpen, onClose, onStartChatWithResult
             <p style={{ fontSize: '0.92rem', color: 'var(--text-main)', lineHeight: 1.7, marginBottom: '24px', maxWidth: '420px', margin: '0 auto 24px' }}>
               {result.advice}
             </p>
+
+            {/* Question 9 Critical Safety Trigger */}
+            {activeTest === 'phq9' && answers[8] > 0 && (
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.14)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  marginBottom: '20px',
+                  textAlign: 'right',
+                  direction: 'rtl',
+                }}
+              >
+                <div style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.95rem', marginBottom: '4px' }}>
+                  🚨 تنبيه أمان إكلينيكي عاجل (Safety Trigger)
+                </div>
+                <div style={{ fontSize: '0.84rem', color: '#fca5a5', lineHeight: 1.5, marginBottom: '12px' }}>
+                  لقد أشرت في السؤال التاسع إلى وجود أفكار تمس سلامتك الشخصية. صحتك وأمانك هما الأولوية القصوى. يُرجى التواصل الفوري مع خطوط الدعم المتخصصة المجانية:
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <a
+                    href="tel:16328"
+                    style={{
+                      background: '#ef4444',
+                      color: '#fff',
+                      textDecoration: 'none',
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    📞 اتصل بـ 16328 (الأمانة العامة للصحة النفسية)
+                  </a>
+                  <a
+                    href="tel:08008880700"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: '#fff',
+                      textDecoration: 'none',
+                      padding: '7px 14px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                    }}
+                  >
+                    📞 08008880700
+                  </a>
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
