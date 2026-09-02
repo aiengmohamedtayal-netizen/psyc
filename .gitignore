@@ -34,6 +34,8 @@ CHAT BOT/*.log
 *.log
 
 # Local tooling & IDE
+.agent/
+.agents/
 .playwright-cli/
 .playwright-input.js
 .vscode/

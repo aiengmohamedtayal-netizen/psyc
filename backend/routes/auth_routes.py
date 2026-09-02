@@ -1,20 +1,37 @@
+"""
+Authentication Endpoints (/api/auth).
+Manages user registration, credential verification, and user profile queries
+using PBKDF2 cryptography and JWT bearer tokens.
+"""
+
+import time
+from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
-import time
+from sqlalchemy.orm import Session
+
 try:
-    from database import (
-        SessionLocal, User, Conversation, Message,
-        hash_password, verify_password, create_access_token, decode_access_token
+    from database import get_db
+    from models import User
+    from utils.security import (
+        hash_password,
+        verify_password,
+        create_access_token,
+        decode_access_token,
     )
+    from routes.conversation_routes import router as conv_router
 except ImportError:
-    from backend.database import (
-        SessionLocal, User, Conversation, Message,
-        hash_password, verify_password, create_access_token, decode_access_token
+    from backend.database import get_db
+    from backend.models import User
+    from backend.utils.security import (
+        hash_password,
+        verify_password,
+        create_access_token,
+        decode_access_token,
     )
+    from backend.routes.conversation_routes import router as conv_router
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-conv_router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
 
 class RegisterRequest(BaseModel):
@@ -34,6 +51,7 @@ class AuthResponse(BaseModel):
 
 
 def get_current_user_id(authorization: Optional[str] = Header(None)) -> Optional[str]:
+    """Extracts and verifies user ID from HTTP Bearer Authorization header."""
     if not authorization or not authorization.startswith("Bearer "):
         return None
     token = authorization.replace("Bearer ", "").strip()
@@ -42,178 +60,78 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> Optional
 
 
 @router.post("/register", response_model=AuthResponse)
-def register(req: RegisterRequest):
+def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    """Registers a new user with unique username check and PBKDF2 salt hashing."""
     clean_username = req.username.strip().lower()
-    db = SessionLocal()
-    try:
-        existing = db.query(User).filter(User.username == clean_username).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="اسم المستخدم مسجل بالفعل.")
 
-        pwd_hash, salt = hash_password(req.password)
-        user_id = f"u_{int(time.time() * 1000)}"
-        new_user = User(
-            id=user_id,
-            username=clean_username,
-            password_hash=pwd_hash,
-            salt=salt,
-            display_name=req.name.strip() if req.name else clean_username,
-            created_at=time.time(),
-        )
-        db.add(new_user)
-        db.commit()
+    # Guard Clause: Check existing username conflict
+    existing = db.query(User).filter(User.username == clean_username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="اسم المستخدم مسجل بالفعل.")
 
-        token = create_access_token(user_id, clean_username)
-        return {
-            "token": token,
-            "user": {
-                "id": user_id,
-                "username": clean_username,
-                "name": new_user.display_name,
-            }
-        }
-    finally:
-        db.close()
+    pwd_hash, salt = hash_password(req.password)
+    user_id = f"u_{int(time.time() * 1000)}"
+
+    new_user = User(
+        id=user_id,
+        username=clean_username,
+        password_hash=pwd_hash,
+        salt=salt,
+        display_name=req.name.strip() if req.name else clean_username,
+        created_at=time.time(),
+    )
+    db.add(new_user)
+    db.commit()
+
+    token = create_access_token(user_id, clean_username)
+    return {
+        "token": token,
+        "user": {
+            "id": user_id,
+            "username": clean_username,
+            "name": new_user.display_name,
+        },
+    }
 
 
 @router.post("/login", response_model=AuthResponse)
-def login(req: LoginRequest):
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    """Authenticates user credentials and returns a signed JWT token."""
     clean_username = req.username.strip().lower()
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.username == clean_username).first()
-        if not user or not verify_password(req.password, user.password_hash, user.salt):
-            raise HTTPException(status_code=401, detail="اسم المستخدم أو كلمة المرور غير صحيحة.")
+    user = db.query(User).filter(User.username == clean_username).first()
 
-        token = create_access_token(user.id, user.username)
-        return {
-            "token": token,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "name": user.display_name,
-            }
-        }
-    finally:
-        db.close()
+    # Guard Clause: Validate user existence and password hash
+    if not user or not verify_password(req.password, user.password_hash, user.salt):
+        raise HTTPException(
+            status_code=401, detail="اسم المستخدم أو كلمة المرور غير صحيحة."
+        )
 
-
-@router.get("/me")
-def get_me(user_id: Optional[str] = Depends(get_current_user_id)):
-    if not user_id:
-        raise HTTPException(status_code=401, detail="غير مصرح.")
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="المستخدم غير موجود.")
-        return {
+    token = create_access_token(user.id, user.username)
+    return {
+        "token": token,
+        "user": {
             "id": user.id,
             "username": user.username,
             "name": user.display_name,
-        }
-    finally:
-        db.close()
+        },
+    }
 
 
-@conv_router.get("")
-def list_conversations(user_id: Optional[str] = Depends(get_current_user_id)):
+@router.get("/me")
+def get_me(
+    user_id: Optional[str] = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    """Returns the current authenticated user profile."""
     if not user_id:
-        return []
-    db = SessionLocal()
-    try:
-        convs = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.updated_at.desc()).all()
-        result = []
-        for c in convs:
-            msgs = db.query(Message).filter(Message.conversation_id == c.id).order_by(Message.created_at.asc()).all()
-            result.append({
-                "id": c.id,
-                "title": c.title,
-                "updatedAt": int(c.updated_at * 1000),
-                "messages": [
-                    {
-                        "id": m.id,
-                        "role": m.role,
-                        "content": m.content,
-                        "timestamp": int(m.created_at * 1000),
-                    }
-                    for m in msgs
-                ]
-            })
-        return result
-    finally:
-        db.close()
+        raise HTTPException(status_code=401, detail="غير مصرح.")
 
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود.")
 
-class MessagePayload(BaseModel):
-    id: Optional[str] = None
-    role: str
-    content: str
-    timestamp: Optional[int] = None
-    clinical_reference: Optional[Dict[str, Any]] = None
-
-
-class ConversationSaveRequest(BaseModel):
-    id: str
-    title: str
-    messages: List[MessagePayload]
-    updatedAt: Optional[int] = None
-
-
-@conv_router.post("")
-def save_conversation(req: ConversationSaveRequest, user_id: Optional[str] = Depends(get_current_user_id)):
-    if not user_id:
-        return {"status": "skipped", "detail": "Guest mode - saved locally"}
-    db = SessionLocal()
-    try:
-        conv = db.query(Conversation).filter(Conversation.id == req.id).first()
-        now = time.time()
-        if not conv:
-            conv = Conversation(
-                id=req.id,
-                user_id=user_id,
-                title=req.title,
-                created_at=now,
-                updated_at=now
-            )
-            db.add(conv)
-        else:
-            conv.title = req.title
-            conv.updated_at = now
-
-        db.query(Message).filter(Message.conversation_id == req.id).delete()
-        import json
-        for idx, m in enumerate(req.messages):
-            msg_id = m.id or f"{req.id}_{idx}_{int(now)}"
-            ref_str = json.dumps(m.clinical_reference) if m.clinical_reference else None
-            db_msg = Message(
-                id=msg_id,
-                conversation_id=req.id,
-                role=m.role,
-                content=m.content,
-                clinical_reference=ref_str,
-                created_at=(m.timestamp / 1000.0) if m.timestamp else now
-            )
-            db.add(db_msg)
-
-        db.commit()
-        return {"status": "saved", "id": req.id}
-    finally:
-        db.close()
-
-
-@conv_router.delete("/{conv_id}")
-def delete_conversation(conv_id: str, user_id: Optional[str] = Depends(get_current_user_id)):
-    if not user_id:
-        return {"status": "deleted"}
-    db = SessionLocal()
-    try:
-        conv = db.query(Conversation).filter(Conversation.id == conv_id, Conversation.user_id == user_id).first()
-        if conv:
-            db.query(Message).filter(Message.conversation_id == conv_id).delete()
-            db.delete(conv)
-            db.commit()
-        return {"status": "deleted", "id": conv_id}
-    finally:
-        db.close()
-
+    return {
+        "id": user.id,
+        "username": user.username,
+        "name": user.display_name,
+    }
