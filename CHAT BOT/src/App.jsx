@@ -40,6 +40,7 @@ export default function App() {
   })
 
   const [activeConversationId, setActiveConversationId] = useState(null)
+  const activeConversation = conversations.find((c) => c.id === activeConversationId)
   const [isBotTyping, setIsBotTyping] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth > 768 : true
@@ -170,8 +171,6 @@ export default function App() {
       setSidebarOpen(false)
     }
   }, [])
-
-  const activeConversation = conversations.find((c) => c.id === activeConversationId)
 
   const handleNewChat = useCallback(() => {
     setActiveConversationId(null)
