@@ -243,18 +243,19 @@ export default function ChatWindow({
           </svg>
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="topbar-brand-group">
           <span className="mobile-title">Stress AI</span>
           <button
             onClick={onOpenBreathing}
-            className="header-pill-btn"
+            className="header-pill-btn header-breathing-btn"
             title="Guided 4-7-8 Breathing"
           >
-            🧘 Breathing
+            <span className="pill-icon">🧘</span>
+            <span className="pill-label">Breathing</span>
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="topbar-actions-group">
           {isChatMode && (
             <button
               className="mobile-new-btn"
@@ -272,18 +273,12 @@ export default function ChatWindow({
 
           {/* Quick-Exit Panic Button */}
           <button
-            className="header-pill-btn"
+            className="header-pill-btn header-panic-btn"
             onClick={handleQuickExit}
             title="خروج سريع فوري ومحو الآثار لحماية الخصوصية"
-            style={{
-              borderColor: 'rgba(239, 68, 68, 0.4)',
-              color: '#f87171',
-              background: 'rgba(239, 68, 68, 0.08)',
-              fontSize: '0.78rem',
-              padding: '4px 9px',
-            }}
           >
-            🚪 خروج سريع
+            <span className="pill-icon">🚪</span>
+            <span className="pill-label">خروج سريع</span>
           </button>
 
           <button
@@ -529,11 +524,10 @@ export default function ChatWindow({
       {/* Claude Hero & Floating Input Dock */}
       <div className="hero-wrapper">
         {!isChatMode && (
-          <header className="header">
+          <header className="header hero-header">
             <div className="header-title">
               <svg
-                width="44"
-                height="44"
+                className="hero-logo-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#cc785c"
@@ -546,9 +540,9 @@ export default function ChatWindow({
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
                 <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
               </svg>
-              <h1>Stress AI Helper</h1>
+              <h1 className="hero-heading">Stress AI Helper</h1>
             </div>
-            <div className="subtitle">Cognitive behavioral support & relaxation guidance</div>
+            <div className="subtitle hero-subtitle">Cognitive behavioral support & relaxation guidance</div>
           </header>
         )}
 
@@ -718,26 +712,17 @@ export default function ChatWindow({
           </div>
 
           {/* Clinical Disclaimer Banner */}
-          <div
-            style={{
-              marginTop: '10px',
-              textAlign: 'center',
-              fontSize: '0.74rem',
-              color: 'var(--text-subtle)',
-              lineHeight: 1.4,
-              padding: '0 8px',
-            }}
-          >
-            ⚠️ <strong>تنبيه إرشادي:</strong> Stress AI مساعد نفسي وتثقيفي سلوكي (CBT)، وليس بديلاً عن التشخيص الطبي أو الطوارئ. في الحالات الحرجة اتصل بـ <strong>16328</strong>.
+          <div className="clinical-disclaimer-bar">
+            <span>⚠️ <strong>تنبيه إرشادي:</strong> Stress AI مساعد نفسي وتثقيفي سلوكي (CBT)، وليس بديلاً عن التشخيص الطبي أو الطوارئ. في الحالات الحرجة اتصل بـ <strong>16328</strong>.</span>
           </div>
         </section>
 
         {!isChatMode && (
-          <div className="buttons-container">
+          <div className="buttons-container topic-chips-container">
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                className={`category-btn ${activeTopic?.id === cat.id ? 'active' : ''}`}
+                className={`category-btn topic-chip-btn ${activeTopic?.id === cat.id ? 'active' : ''}`}
                 onClick={() => {
                   if (activeTopic?.id === cat.id && showPanel) {
                     setShowPanel(false)

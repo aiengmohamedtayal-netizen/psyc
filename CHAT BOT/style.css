@@ -84,10 +84,12 @@
 html, body {
   width: 100%;
   height: 100%;
+  max-width: 100vw;
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-sans);
   overflow: hidden;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -98,9 +100,11 @@ html, body {
 .app-container {
   display: flex;
   width: 100vw;
+  max-width: 100vw;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  overflow-x: hidden;
   position: relative;
   background-color: var(--bg-main);
 }
@@ -408,6 +412,85 @@ html, body {
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   z-index: 30;
+}
+
+.topbar-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  transition: all 0.15s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.header-pill-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-border);
+}
+
+.header-panic-btn {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #f87171 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.header-panic-btn:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: #ef4444 !important;
+}
+
+.hero-logo-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.hero-heading {
+  font-family: var(--font-serif);
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: #f7f4ed;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  font-weight: 400;
+  font-family: var(--font-sans);
+}
+
+.clinical-disclaimer-bar {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--text-subtle);
+  line-height: 1.45;
+  padding: 0 8px;
+  direction: rtl;
 }
 
 .mobile-menu-btn,
@@ -1191,13 +1274,236 @@ html, body {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   RESPONSIVE MEDIA QUERIES (MOBILE & TABLET)
+   RESPONSIVE DESIGN SYSTEM (3-TIER ARCHITECTURE)
    ═══════════════════════════════════════════════════════════ */
 
-/* Tablets & Mobile (< 768px) */
-@media (max-width: 768px) {
+/* ─────────────────────────────────────────────────────────────
+   1. MOBILE PHONES (max-width: 640px)
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Global Page Container */
+  .app-container {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .main-content {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  .main-content:not(.chat-mode) {
+    padding: 10px 8px 16px;
+    justify-content: flex-start;
+  }
+
+  /* Header Navigation */
   .mobile-topbar {
-    display: flex;
+    display: flex !important;
+    padding: 0 10px;
+    height: 48px;
+    justify-content: space-between;
+  }
+
+  .topbar-brand-group {
+    gap: 6px;
+  }
+
+  .topbar-actions-group {
+    gap: 4px;
+  }
+
+  .mobile-title {
+    font-size: 0.96rem;
+    font-weight: 600;
+  }
+
+  /* Hide secondary button labels on mobile; keep icons only */
+  .header-pill-btn .pill-label {
+    display: none !important;
+  }
+
+  .header-pill-btn {
+    padding: 4px 8px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    justify-content: center !important;
+  }
+
+  .header-pill-btn .pill-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .mobile-menu-btn,
+  .mobile-new-btn {
+    padding: 6px;
+  }
+
+  /* Sidebar Drawer on Mobile */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 280px;
+    z-index: 50;
+    transform: translateX(-100%);
+    box-shadow: 6px 0 30px rgba(0, 0, 0, 0.7);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+  }
+
+  /* Hero Section */
+  .hero-wrapper {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 0 8px;
+  }
+
+  .hero-header {
+    margin-bottom: 16px !important;
+  }
+
+  .header-title {
+    gap: 8px !important;
+  }
+
+  .hero-logo-icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .hero-heading {
+    font-size: 1.5rem !important;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 0.85rem !important;
+    margin-top: 4px !important;
+    padding: 0 10px;
+    text-align: center;
+  }
+
+  /* Chat Input Container */
+  .input-section {
+    width: calc(100% - 20px) !important;
+    max-width: 100% !important;
+    margin: 0 auto 12px !important;
+  }
+
+  .input-container {
+    padding: 10px 12px 8px !important;
+    border-radius: 16px !important;
+    gap: 6px !important;
+  }
+
+  .main-input {
+    font-size: 0.92rem !important;
+    min-height: 42px !important;
+    line-height: 1.45 !important;
+  }
+
+  .input-controls {
+    min-height: 28px !important;
+  }
+
+  .right-controls {
+    gap: 6px !important;
+  }
+
+  /* Clinical Disclaimer Banner */
+  .clinical-disclaimer-bar {
+    font-size: 0.75rem !important;
+    line-height: 1.35 !important;
+    padding: 4px 6px !important;
+    margin-top: 6px !important;
+    direction: rtl !important;
+    text-align: center !important;
+  }
+
+  /* Topic Chips Horizontal Scroll Row */
+  .topic-chips-container,
+  .buttons-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 4px 10px 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  .topic-chips-container::-webkit-scrollbar,
+  .buttons-container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .topic-chips-container .category-btn,
+  .buttons-container .category-btn {
+    flex-shrink: 0 !important;
+    padding: 6px 13px !important;
+    font-size: 0.82rem !important;
+    border-radius: 16px !important;
+  }
+
+  /* Chat Mode Messages */
+  .main-content.chat-mode .messages-container {
+    padding: 12px 10px 125px;
+    gap: 14px;
+  }
+
+  .user-bubble {
+    max-width: 92%;
+    padding: 9px 13px;
+    font-size: 0.92rem;
+  }
+
+  .bot-content {
+    font-size: 0.94rem;
+  }
+
+  .suggestions-panel {
+    max-height: 200px;
+  }
+
+  .suggestion-item {
+    font-size: 0.85rem;
+    padding: 9px 12px;
+  }
+
+  .search-modal-overlay {
+    padding-top: 5vh;
+  }
+
+  .chats-page-view {
+    padding: 16px 10px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. TABLETS (min-width: 641px) and (max-width: 1024px)
+   ───────────────────────────────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .mobile-topbar {
+    display: flex !important;
+    padding: 0 16px;
+    height: 52px;
   }
 
   .sidebar {
@@ -1219,87 +1525,121 @@ html, body {
     display: block;
   }
 
-  .main-content:not(.chat-mode) {
-    padding: 16px 12px;
+  .header-pill-btn .pill-label {
+    display: inline !important;
+    font-size: 13px !important;
   }
 
-  .main-content.chat-mode .messages-container {
-    padding: 16px 12px 130px;
-    gap: 18px;
+  .header-pill-btn {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
   }
 
-  .main-content.chat-mode .hero-wrapper {
-    padding: 14px 12px 12px;
+  .hero-wrapper {
+    max-width: 680px;
+    width: 94%;
+    padding: 16px 0;
   }
 
-  .input-container {
-    padding: 12px 14px;
-    border-radius: 16px;
+  .hero-logo-icon {
+    width: 36px;
+    height: 36px;
   }
 
-  .main-input {
-    font-size: 1rem;
-    min-height: 44px;
-  }
-
-  .header {
-    margin-bottom: 24px;
-  }
-
-  .header h1 {
-    font-size: 2.1rem;
-  }
-
-  .subtitle {
-    font-size: 0.92rem;
-  }
-
-  .category-btn {
-    font-size: 0.85rem;
-    padding: 7px 13px;
-  }
-
-  .user-bubble {
-    max-width: 90%;
-    padding: 10px 15px;
-    font-size: 0.95rem;
-  }
-
-  .bot-content {
-    font-size: 0.98rem;
-  }
-
-  .search-modal-overlay {
-    padding-top: 6vh;
-  }
-
-  .chats-page-view {
-    padding: 20px 12px;
-  }
-}
-
-/* Small Screens (< 480px) */
-@media (max-width: 480px) {
-  .header h1 {
+  .hero-heading {
     font-size: 1.85rem;
   }
 
+  .hero-subtitle {
+    font-size: 0.92rem;
+  }
+
+  .input-section {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto 20px;
+  }
+
+  .input-container {
+    padding: 14px 18px 12px;
+  }
+
+  .topic-chips-container,
   .buttons-container {
-    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
   }
 
-  .category-btn {
-    font-size: 0.8rem;
-    padding: 6px 11px;
-  }
-
-  .suggestions-panel {
-    max-height: 200px;
-  }
-
-  .suggestion-item {
+  .topic-chips-container .category-btn,
+  .buttons-container .category-btn {
     font-size: 0.85rem;
-    padding: 9px 12px;
+    padding: 7px 14px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. DESKTOP & LARGE SCREENS (min-width: 1025px)
+   ───────────────────────────────────────────────────────────── */
+@media (min-width: 1025px) {
+  .mobile-topbar {
+    display: none !important;
+  }
+
+  .sidebar {
+    position: static;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .sidebar-backdrop {
+    display: none !important;
+  }
+
+  .hero-wrapper {
+    max-width: 768px;
+    width: 100%;
+    padding: 24px 0;
+  }
+
+  .hero-logo-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hero-heading {
+    font-size: 2.2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .input-section {
+    width: 100%;
+    max-width: 768px;
+    margin: 0 auto 24px;
+  }
+
+  .input-container {
+    padding: 16px 20px 14px;
+  }
+
+  .topic-chips-container,
+  .buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .topic-chips-container .category-btn,
+  .buttons-container .category-btn {
+    font-size: 0.88rem;
+    padding: 8px 16px;
   }
 }
 
