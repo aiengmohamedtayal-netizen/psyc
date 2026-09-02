@@ -12,7 +12,11 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy import create_engine, Column, String, Integer, Float, Text, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_FILE = os.path.join(os.path.dirname(__file__), "stress_ai.db")
+if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    DATABASE_FILE = "/tmp/stress_ai.db"
+else:
+    DATABASE_FILE = os.path.join(os.path.dirname(__file__), "stress_ai.db")
+
 DATABASE_URL = f"sqlite:///{DATABASE_FILE}"
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "stress_ai_secret_super_secure_key_2026")

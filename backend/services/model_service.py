@@ -33,6 +33,10 @@ class ModelService:
         data_paths = [
             os.path.join(os.path.dirname(__file__), "..", "data", "data.json"),
             os.path.join(os.path.dirname(__file__), "..", "..", "data", "data.json"),
+            os.path.join(os.getcwd(), "backend", "data", "data.json"),
+            os.path.join(os.getcwd(), "data", "data.json"),
+            "/var/task/backend/data/data.json",
+            "/var/task/data/data.json",
         ]
 
         loaded_data = []
