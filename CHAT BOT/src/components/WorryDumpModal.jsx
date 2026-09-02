@@ -27,8 +27,39 @@ export default function WorryDumpModal({ isOpen, onClose }) {
 
   if (!isOpen) return null
 
+  const playBurnSound = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      const bufferSize = Math.floor(ctx.sampleRate * 0.9)
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+      const data = buffer.getChannelData(0)
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.35
+      }
+      const noise = ctx.createBufferSource()
+      noise.buffer = buffer
+
+      const filter = ctx.createBiquadFilter()
+      filter.type = 'lowpass'
+      filter.frequency.setValueAtTime(350, ctx.currentTime)
+      filter.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.85)
+
+      const gain = ctx.createGain()
+      gain.gain.setValueAtTime(0.25, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.85)
+
+      noise.connect(filter)
+      filter.connect(gain)
+      gain.connect(ctx.destination)
+      noise.start()
+    } catch {}
+  }
+
   const handleBurnThoughts = () => {
     if (!worryText.trim()) return
+    playBurnSound()
     setIsBurning(true)
     setTimeout(() => {
       setIsBurning(false)

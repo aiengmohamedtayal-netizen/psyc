@@ -108,6 +108,37 @@ export default function AssessmentModal({ isOpen, onClose, onStartChatWithResult
     onStartChatWithResult(promptText, activeTest === 'isi' ? 'sleep' : 'anxiety')
   }
 
+  const handleExportClinicalReport = () => {
+    const dateStr = new Date().toLocaleDateString('ar-EG', { dateStyle: 'full' })
+    const reportText = `# 📋 تقرير تقييم سريري معتمد (Clinical Assessment Report)
+المنصة: Stress AI Helper
+التاريخ: ${dateStr}
+نوع الفحص: ${currentTest.title}
+
+## 1. ملخص النتيجة:
+- مجموع الدرجات: ${totalScore} من أصل ${totalQuestions * 3}
+- المستوى السريري: ${result.level}
+
+## 2. الإرشادات الأولية:
+${result.advice}
+
+## 3. تفاصيل الأسئلة والإجابات:
+${currentTest.questions.map((q, i) => `${i + 1}. ${q}\n   - الدرجة المحددة: ${answers[i] ?? 0} / 3`).join('\n\n')}
+
+---
+تنبيه سري: هذا التقرير للاستخدام الإكلينيكي والاسترشادي فقط، ولا يغني عن مراجعة الطبيب النفسي المختص.
+`
+    const blob = new Blob([reportText], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `clinical_assessment_${activeTest}_${Date.now()}.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="search-modal-overlay" style={{ alignItems: 'center', paddingTop: 0 }}>
       <div className="search-modal-content" style={{ maxWidth: '560px', padding: '28px 24px', maxHeight: '85vh', position: 'relative' }}>
@@ -302,6 +333,27 @@ export default function AssessmentModal({ isOpen, onClose, onStartChatWithResult
                 style={{ background: 'var(--accent)' }}
               >
                 💬 مناقشة هذه النتيجة مع Stress AI للحصول على خطة
+              </button>
+
+              <button
+                onClick={handleExportClinicalReport}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '0.86rem',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'background 0.15s ease',
+                }}
+              >
+                📄 تصدير تقرير إكلينيكي مفصل للمعالج النفسي
               </button>
 
               <button
