@@ -13,7 +13,7 @@ export const CURRENT_USER_KEY = 'stress_ai_current_user'
  */
 export function getNotionAvatarUrl(seed) {
   const cleanSeed = encodeURIComponent((seed || 'User').trim())
-  return `https://api.dicebear.com/9.x/notionists/svg?seed=${cleanSeed}&backgroundColor=transparent`
+  return `https://api.dicebear.com/9.x/notionists/svg?seed=${cleanSeed}&backgroundColor=ffffff`
 }
 
 /**

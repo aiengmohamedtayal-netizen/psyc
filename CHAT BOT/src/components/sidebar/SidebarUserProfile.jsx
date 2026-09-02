@@ -34,8 +34,10 @@ export default function SidebarUserProfile({
             className="user-avatar-circle"
             style={{
               overflow: 'hidden',
-              background: 'rgba(204, 120, 92, 0.12)',
-              border: '1px solid var(--border-color, #383531)',
+              background: '#ffffff',
+              padding: '2px',
+              border: '1.5px solid var(--accent, #cc785c)',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -51,11 +53,13 @@ export default function SidebarUserProfile({
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
+                borderRadius: '50%',
                 display: 'block',
               }}
               onError={(e) => {
                 e.target.style.display = 'none'
+                e.target.parentElement.style.background = 'rgba(204, 120, 92, 0.2)'
                 e.target.parentElement.innerText = (userDisplayName[0] || 'U').toUpperCase()
               }}
             />

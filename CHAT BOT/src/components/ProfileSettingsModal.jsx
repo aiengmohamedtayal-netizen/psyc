@@ -139,17 +139,18 @@ export default function ProfileSettingsModal({
           {/* Large Notion Avatar Preview */}
           <div
             style={{
-              width: '106px',
-              height: '106px',
+              width: '108px',
+              height: '108px',
               borderRadius: '50%',
               overflow: 'hidden',
-              background: 'radial-gradient(circle, rgba(204, 120, 92, 0.15) 0%, rgba(39, 37, 34, 0.6) 100%)',
+              background: '#ffffff',
+              padding: '4px',
               border: '2.5px solid var(--accent, #cc785c)',
               boxShadow: '0 0 24px rgba(204, 120, 92, 0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: '12px',
+              marginBottom: '14px',
               transition: 'transform 0.2s ease',
             }}
           >
@@ -159,7 +160,8 @@ export default function ProfileSettingsModal({
               style={{
                 width: '100%',
                 height: '100%',
-                objectFit: 'cover',
+                objectFit: 'contain',
+                borderRadius: '50%',
                 display: 'block',
               }}
             />

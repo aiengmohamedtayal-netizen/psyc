@@ -59,31 +59,33 @@ export default function ChatInputArea({
   return (
     <footer className="modern-input-dock">
       <div className="modern-input-wrapper">
-        {/* Filter Pills Above Input */}
-        <div className="modern-filter-pills">
-          <button
-            type="button"
-            className={`filter-pill ${!activeTopic ? 'active' : ''}`}
-            onClick={() => setActiveTopic(null)}
-          >
-            <span>💬</span>
-            <span>الكل</span>
-          </button>
-
-          {CHAT_TOPIC_CATEGORIES.map((cat) => (
+        {/* Filter Pills Above Input (Only in Chat Mode) */}
+        {isChatMode && (
+          <div className="modern-filter-pills">
             <button
-              key={cat.id}
               type="button"
-              className={`filter-pill ${activeTopic?.id === cat.id ? 'active' : ''}`}
-              onClick={() =>
-                setActiveTopic(activeTopic?.id === cat.id ? null : cat)
-              }
+              className={`filter-pill ${!activeTopic ? 'active' : ''}`}
+              onClick={() => setActiveTopic(null)}
             >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
+              <span>💬</span>
+              <span>الكل</span>
             </button>
-          ))}
-        </div>
+
+            {CHAT_TOPIC_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                className={`filter-pill ${activeTopic?.id === cat.id ? 'active' : ''}`}
+                onClick={() =>
+                  setActiveTopic(activeTopic?.id === cat.id ? null : cat)
+                }
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Rounded-2xl Modern Input Bar */}
         <div className="modern-input-card">
