@@ -1,101 +1,469 @@
-import React, { useState, useCallback } from 'react'
-import Sidebar from './components/Sidebar.jsx'
-import ChatWindow from './components/ChatWindow.jsx'
-import ChatsPage from './components/ChatsPage.jsx'
-import AppModals from './components/AppModals.jsx'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import Sidebar from './components/Sidebar'
+import ChatWindow from './components/ChatWindow'
+import ChatsPage from './components/ChatsPage'
+import SearchModal from './components/SearchModal'
+import BreathingModal from './components/BreathingModal'
+import AssessmentModal from './components/AssessmentModal'
+import AmbientSoundModal from './components/AmbientSoundModal'
+import WorryDumpModal from './components/WorryDumpModal'
+import MoodTrackerModal from './components/MoodTrackerModal'
+import AuthPage from './components/AuthPage'
 
-import { useConversations } from './hooks/useConversations.js'
-import { useChatStream } from './hooks/useChatStream.js'
-import { useModalManager } from './hooks/useModalManager.js'
-import { useResponsiveSidebar } from './hooks/useResponsiveSidebar.js'
-import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts.js'
-import { exportConversationToMarkdown } from './utils/exportChat.js'
-import { getSessionUser, CURRENT_USER_KEY } from './services/authStorage.js'
+const STORAGE_KEY = 'stress_ai_conversations_v2'
+const CURRENT_USER_KEY = 'stress_ai_current_user'
 
-/**
- * Root Application Component.
- * Pure orchestrator assembling conversation state, streaming responses,
- * responsive navigation, and interactive mental health dialogs.
- */
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  ''
+).replace(/\/$/, '')
+
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(getSessionUser)
+  // Current authenticated user
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CURRENT_USER_KEY)
+      return saved ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
+  })
+
+  const [conversations, setConversations] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+
+  const [activeConversationId, setActiveConversationId] = useState(null)
+  const activeConversation = conversations.find((c) => c.id === activeConversationId)
+  const [isBotTyping, setIsBotTyping] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth > 768 : true
+  )
   const [currentView, setCurrentView] = useState('chat') // 'chat' | 'chats'
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isBreathingOpen, setIsBreathingOpen] = useState(false)
+  const [isAssessmentOpen, setIsAssessmentOpen] = useState(false)
+  const [isAmbientOpen, setIsAmbientOpen] = useState(false)
+  const [isWorryOpen, setIsWorryOpen] = useState(false)
+  const [isMoodOpen, setIsMoodOpen] = useState(false)
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
 
-  const sidebar = useResponsiveSidebar()
-  const modalManager = useModalManager()
+  const abortControllerRef = useRef(null)
 
-  const conversationStore = useConversations(currentUser)
-  const {
-    conversations,
-    setConversations,
-    activeConversationId,
-    setActiveConversationId,
-    activeConversation,
-    selectConversation,
-    createNewChat,
-    deleteConversation,
-    syncActiveConversation,
-  } = conversationStore
+  // Auto-close sidebar on mobile on resize if screen becomes small
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setSidebarOpen(false)
+      } else {
+        setSidebarOpen(true)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-  const chat = useChatStream({
-    setConversations,
-    activeConversationId,
-    setActiveConversationId,
-    activeConversation,
-    syncActiveConversation,
-  })
+  const getStorageKey = useCallback((user) => {
+    return user?.id ? `stress_ai_conversations_${user.id}` : 'stress_ai_conversations_guest'
+  }, [])
 
-  // Register Ctrl+K / Cmd+K search shortcut
-  useGlobalKeyboardShortcuts({
-    onSearchToggle: () => {
-      modalManager.openModal(
-        modalManager.isModalOpen('search') ? null : 'search'
-      )
-    },
-  })
+  // Sync conversations when currentUser changes (Login / Logout / Switch account)
+  useEffect(() => {
+    const key = getStorageKey(currentUser)
+    if (currentUser?.token) {
+      // Fetch user's persistent conversations from Neon Cloud DB
+      fetch(`${API_BASE_URL}/api/conversations`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setConversations(data)
+            localStorage.setItem(key, JSON.stringify(data))
+          } else {
+            try {
+              const local = localStorage.getItem(key)
+              setConversations(local ? JSON.parse(local) : [])
+            } catch {
+              setConversations([])
+            }
+          }
+        })
+        .catch(() => {
+          try {
+            const local = localStorage.getItem(key)
+            setConversations(local ? JSON.parse(local) : [])
+          } catch {
+            setConversations([])
+          }
+        })
+    } else {
+      // Guest mode
+      try {
+        const local = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY)
+        setConversations(local ? JSON.parse(local) : [])
+      } catch {
+        setConversations([])
+      }
+    }
+  }, [currentUser, getStorageKey])
+
+  // Persist conversations to local storage per user
+  useEffect(() => {
+    try {
+      const key = getStorageKey(currentUser)
+      localStorage.setItem(key, JSON.stringify(conversations))
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e)
+    }
+  }, [conversations, currentUser, getStorageKey])
+
+  const syncConversationToCloud = useCallback((conv) => {
+    if (!currentUser?.token || !conv) return
+    fetch(`${API_BASE_URL}/api/conversations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${currentUser.token}`,
+      },
+      body: JSON.stringify({
+        id: String(conv.id),
+        title: conv.title || 'جلسة جديدة',
+        updatedAt: conv.updatedAt || Date.now(),
+        messages: (conv.messages || []).map((m) => ({
+          id: String(m.id),
+          role: m.role,
+          content: m.content || '',
+          timestamp: m.timestamp || Date.now(),
+          clinical_reference: m.clinical_reference || null,
+        })),
+      }),
+    }).catch((err) => console.warn('Cloud conversation sync note:', err))
+  }, [currentUser])
+
+  // Automatically sync to Neon Cloud DB when bot finishes streaming
+  useEffect(() => {
+    if (!isBotTyping && activeConversation && currentUser?.token) {
+      syncConversationToCloud(activeConversation)
+    }
+  }, [isBotTyping, activeConversation, currentUser, syncConversationToCloud])
+
+  // Global keyboard shortcut: Ctrl+K / Cmd+K for search
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsSearchOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const closeMobileSidebar = useCallback(() => {
+    if (window.innerWidth <= 768) {
+      setSidebarOpen(false)
+    }
+  }, [])
 
   const handleNewChat = useCallback(() => {
-    createNewChat(() => {
-      setCurrentView('chat')
-      sidebar.closeMobileSidebar()
-    })
-  }, [createNewChat, sidebar])
+    setActiveConversationId(null)
+    setCurrentView('chat')
+    closeMobileSidebar()
+  }, [closeMobileSidebar])
 
-  const handleSelectConversation = useCallback(
-    (id) => {
-      selectConversation(id, () => {
-        setCurrentView('chat')
-        sidebar.closeMobileSidebar()
-      })
-    },
-    [selectConversation, sidebar]
-  )
+  const handleSelectConversation = useCallback((id) => {
+    setActiveConversationId(id)
+    setCurrentView('chat')
+    closeMobileSidebar()
+  }, [closeMobileSidebar])
+
+  const handleDeleteConversation = useCallback((id) => {
+    setConversations((prev) => prev.filter((c) => c.id !== id))
+    setActiveConversationId((currentActive) => (currentActive === id ? null : currentActive))
+    if (currentUser?.token) {
+      fetch(`${API_BASE_URL}/api/conversations/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      }).catch((err) => console.warn('Cloud delete error:', err))
+    }
+  }, [currentUser])
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem(CURRENT_USER_KEY)
     setCurrentUser(null)
-    createNewChat()
-  }, [createNewChat])
+    setActiveConversationId(null)
+  }, [])
 
+  // Export current conversation to Markdown
   const handleExportChat = useCallback(() => {
-    exportConversationToMarkdown(activeConversation)
+    if (!activeConversation || !activeConversation.messages?.length) return
+
+    let md = `# ${activeConversation.title || 'Stress AI Consultation'}\n`
+    md += `*Date: ${new Date(activeConversation.updatedAt || Date.now()).toLocaleString()}*\n\n---\n\n`
+
+    activeConversation.messages.forEach((msg) => {
+      const roleName = msg.role === 'user' ? '👤 **You**' : '✳ **Stress AI**'
+      md += `${roleName}:\n${msg.content}\n\n`
+    })
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `stress-ai-chat-${Date.now()}.md`
+    a.click()
+    URL.revokeObjectURL(url)
   }, [activeConversation])
 
-  const handleStartChatWithResult = useCallback(
-    (promptText, topic) => {
-      handleNewChat()
-      chat.sendMessage(promptText, topic)
-    },
-    [handleNewChat, chat]
-  )
+  // Real-Time SSE Token Streaming Message Handler
+  const handleSendMessage = async (text, topicId = null) => {
+    const trimmedText = text.trim()
+    if (!trimmedText || isBotTyping) return
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+
+    let targetConvId = activeConversationId
+    const userMessage = {
+      id: `u_${Date.now()}`,
+      role: 'user',
+      content: trimmedText,
+      timestamp: Date.now(),
+    }
+
+    const botMessageId = `b_${Date.now()}`
+    const initialBotMessage = {
+      id: botMessageId,
+      role: 'bot',
+      content: '',
+      isStreaming: true,
+      enhanced_by_ai: true,
+      timestamp: Date.now(),
+    }
+
+    const existingMessages = activeConversation?.messages || []
+    const historyPayload = existingMessages.slice(-6).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }))
+
+    if (!targetConvId) {
+      targetConvId = Date.now().toString()
+      const newConv = {
+        id: targetConvId,
+        title: trimmedText.length > 35 ? trimmedText.substring(0, 35) + '...' : trimmedText,
+        messages: [userMessage, initialBotMessage],
+        updatedAt: Date.now(),
+      }
+      setConversations((prev) => [newConv, ...prev])
+      setActiveConversationId(targetConvId)
+    } else {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === targetConvId
+            ? {
+                ...c,
+                messages: [...c.messages, userMessage, initialBotMessage],
+                updatedAt: Date.now(),
+              }
+            : c
+        )
+      )
+    }
+
+    setIsBotTyping(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/predict/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: trimmedText,
+          topic: topicId || '',
+          history: historyPayload,
+        }),
+        signal: abortControllerRef.current.signal,
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Streaming failed with status: ${response.status}`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let accumulatedText = ''
+      let buffer = ''
+      let wasEnhanced = true
+      let finalClinicalRef = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmedLine = line.trim()
+          if (!trimmedLine.startsWith('data: ')) continue
+
+          const dataStr = trimmedLine.replace(/^data:\s*/, '').trim()
+          if (dataStr === '[DONE]') break
+
+          try {
+            const parsed = JSON.parse(dataStr)
+            if (parsed.delta) {
+              accumulatedText += parsed.delta
+              const currentText = accumulatedText
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === targetConvId
+                    ? {
+                        ...c,
+                        messages: c.messages.map((m) =>
+                          m.id === botMessageId
+                            ? { ...m, content: currentText, isStreaming: true }
+                            : m
+                        ),
+                        updatedAt: Date.now(),
+                      }
+                    : c
+                )
+              )
+            } else if (parsed.meta) {
+              if (typeof parsed.meta.enhanced_by_ai === 'boolean') {
+                wasEnhanced = parsed.meta.enhanced_by_ai
+              }
+              if (parsed.meta.clinical_reference) {
+                finalClinicalRef = parsed.meta.clinical_reference
+                setConversations((prev) =>
+                  prev.map((c) =>
+                    c.id === targetConvId
+                      ? {
+                          ...c,
+                          messages: c.messages.map((m) =>
+                            m.id === botMessageId
+                              ? { ...m, clinical_reference: finalClinicalRef }
+                              : m
+                          ),
+                        }
+                      : c
+                  )
+                )
+              }
+            }
+          } catch {
+            // ignore non-json chunk
+          }
+        }
+      }
+
+      // Mark streaming complete
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === targetConvId
+            ? {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === botMessageId
+                    ? {
+                        ...m,
+                        content: accumulatedText || 'I am here to support you.',
+                        isStreaming: false,
+                        enhanced_by_ai: wasEnhanced,
+                        clinical_reference: finalClinicalRef || m.clinical_reference,
+                      }
+                    : m
+                ),
+                updatedAt: Date.now(),
+              }
+            : c
+        )
+      )
+    } catch (error) {
+      if (error.name === 'AbortError') return
+
+      console.warn('Streaming error, trying fallback endpoint:', error)
+
+      try {
+        const fallbackRes = await fetch(`${API_BASE_URL}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: trimmedText,
+            topic: topicId || '',
+            history: historyPayload,
+          }),
+        })
+
+        if (!fallbackRes.ok) throw new Error('Fallback failed')
+
+        const data = await fallbackRes.json()
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === targetConvId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === botMessageId
+                      ? {
+                          ...m,
+                          content: data.prediction,
+                          isStreaming: false,
+                          enhanced_by_ai: data.enhanced_by_ai ?? false,
+                          clinical_reference: data.clinical_reference,
+                        }
+                      : m
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c
+          )
+        )
+      } catch {
+        const isArabic = /[\u0600-\u06FF]/.test(trimmedText)
+        const errorMessage = isArabic
+          ? 'عذراً، لم أتمكن من الاتصال بالخادم. يرجى التأكد من تشغيل الباك إند على المنفذ 8000.'
+          : "Sorry, I couldn't connect to the backend server. Please make sure FastAPI is running on port 8000."
+
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === targetConvId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === botMessageId
+                      ? { ...m, content: errorMessage, isStreaming: false }
+                      : m
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c
+          )
+        )
+      }
+    } finally {
+      setIsBotTyping(false)
+    }
+  }
 
   return (
     <div className="app-container">
       {/* Mobile Drawer Backdrop */}
-      {sidebar.isOpen && (
+      {sidebarOpen && (
         <div
           className="sidebar-backdrop"
-          onClick={() => sidebar.setIsOpen(false)}
+          onClick={() => setSidebarOpen(false)}
           title="Close navigation"
         />
       )}
@@ -104,24 +472,45 @@ export default function App() {
         conversations={conversations}
         activeId={activeConversationId}
         currentView={currentView}
-        isOpen={sidebar.isOpen}
-        currentUser={currentUser}
         onNewChat={handleNewChat}
         onSelect={handleSelectConversation}
-        onDeleteConversation={deleteConversation}
-        onToggle={sidebar.toggleSidebar}
-        onLogout={handleLogout}
-        onOpenSearch={() => modalManager.openModal('search', sidebar.closeMobileSidebar)}
+        onOpenSearch={() => {
+          setIsSearchOpen(true)
+          closeMobileSidebar()
+        }}
         onOpenChats={() => {
           setCurrentView('chats')
-          sidebar.closeMobileSidebar()
+          closeMobileSidebar()
         }}
-        onOpenBreathing={() => modalManager.openModal('breathing', sidebar.closeMobileSidebar)}
-        onOpenAssessments={() => modalManager.openModal('assessment', sidebar.closeMobileSidebar)}
-        onOpenAmbientSounds={() => modalManager.openModal('ambient', sidebar.closeMobileSidebar)}
-        onOpenWorryDump={() => modalManager.openModal('worry', sidebar.closeMobileSidebar)}
-        onOpenMoodTracker={() => modalManager.openModal('mood', sidebar.closeMobileSidebar)}
-        onOpenAuth={() => modalManager.openModal('auth', sidebar.closeMobileSidebar)}
+        onDeleteConversation={handleDeleteConversation}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onOpenBreathing={() => {
+          setIsBreathingOpen(true)
+          closeMobileSidebar()
+        }}
+        onOpenAssessments={() => {
+          setIsAssessmentOpen(true)
+          closeMobileSidebar()
+        }}
+        onOpenAmbientSounds={() => {
+          setIsAmbientOpen(true)
+          closeMobileSidebar()
+        }}
+        onOpenWorryDump={() => {
+          setIsWorryOpen(true)
+          closeMobileSidebar()
+        }}
+        onOpenMoodTracker={() => {
+          setIsMoodOpen(true)
+          closeMobileSidebar()
+        }}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onOpenAuth={() => {
+          setIsAuthOpen(true)
+          closeMobileSidebar()
+        }}
       />
 
       {currentView === 'chats' ? (
@@ -129,26 +518,63 @@ export default function App() {
           conversations={conversations}
           onSelectConversation={handleSelectConversation}
           onNewChat={handleNewChat}
-          onDeleteConversation={deleteConversation}
+          onDeleteConversation={handleDeleteConversation}
         />
       ) : (
         <ChatWindow
           conversation={activeConversation}
-          isBotTyping={chat.isBotTyping}
-          onSendMessage={chat.sendMessage}
-          onToggleSidebar={sidebar.toggleSidebar}
+          onSendMessage={handleSendMessage}
+          isBotTyping={isBotTyping}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
           onNewChat={handleNewChat}
-          onOpenBreathing={() => modalManager.openModal('breathing')}
+          onOpenBreathing={() => setIsBreathingOpen(true)}
           onExportChat={handleExportChat}
         />
       )}
 
-      <AppModals
-        modalManager={modalManager}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
         conversations={conversations}
         onSelectConversation={handleSelectConversation}
-        onStartChatWithResult={handleStartChatWithResult}
-        onLoginSuccess={setCurrentUser}
+      />
+
+      <BreathingModal
+        isOpen={isBreathingOpen}
+        onClose={() => setIsBreathingOpen(false)}
+      />
+
+      <AssessmentModal
+        isOpen={isAssessmentOpen}
+        onClose={() => setIsAssessmentOpen(false)}
+        onStartChatWithResult={(promptText, topic) => {
+          handleNewChat()
+          handleSendMessage(promptText, topic)
+        }}
+      />
+
+      <AmbientSoundModal
+        isOpen={isAmbientOpen}
+        onClose={() => setIsAmbientOpen(false)}
+      />
+
+      <WorryDumpModal
+        isOpen={isWorryOpen}
+        onClose={() => setIsWorryOpen(false)}
+      />
+
+      <MoodTrackerModal
+        isOpen={isMoodOpen}
+        onClose={() => setIsMoodOpen(false)}
+      />
+
+      <AuthPage
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user)
+          setIsAuthOpen(false)
+        }}
       />
     </div>
   )

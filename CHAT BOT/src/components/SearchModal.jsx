@@ -1,46 +1,45 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { useEscapeKey } from '../hooks/useEscapeKey.js'
 
-/**
- * Fast search dialog filtering past conversations and messages.
- */
-export default function SearchModal({
-  isOpen,
-  onClose,
-  conversations,
-  onSelectConversation,
-}) {
+export default function SearchModal({ isOpen, onClose, conversations, onSelectConversation }) {
   const [query, setQuery] = useState('')
   const modalRef = useRef(null)
   const inputRef = useRef(null)
 
-  useEscapeKey(isOpen, onClose)
-
   useEffect(() => {
     if (isOpen) {
       setQuery('')
-      const timer = setTimeout(() => inputRef.current?.focus(), 50)
-      return () => clearTimeout(timer)
+      setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [isOpen])
 
-  const handleClickOutside = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  const handleClickOutside = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose()
     }
   }
 
   const results = useMemo(() => {
     if (!conversations || conversations.length === 0) return []
-    const cleanQuery = query.trim().toLowerCase()
-    if (!cleanQuery) {
+    const q = query.trim().toLowerCase()
+    if (!q) {
       return conversations.slice(0, 8)
     }
-
     return conversations.filter((conv) => {
-      const matchTitle = conv.title?.toLowerCase().includes(cleanQuery)
-      const matchMessage = conv.messages?.some((message) =>
-        message.content?.toLowerCase().includes(cleanQuery)
+      const matchTitle = conv.title?.toLowerCase().includes(q)
+      const matchMessage = conv.messages?.some((m) =>
+        m.content?.toLowerCase().includes(q)
       )
       return matchTitle || matchMessage
     })
@@ -49,17 +48,8 @@ export default function SearchModal({
   if (!isOpen) return null
 
   return (
-    <div
-      className="search-modal-overlay"
-      onClick={handleClickOutside}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="search-modal-content"
-        ref={modalRef}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="search-modal-overlay" onClick={handleClickOutside}>
+      <div className="search-modal-content" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         <div className="search-modal-header">
           <svg
             className="search-icon"
@@ -82,13 +72,7 @@ export default function SearchModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button
-            type="button"
-            className="close-search-btn"
-            onClick={onClose}
-            title="Close (Esc)"
-            aria-label="Close"
-          >
+          <button className="close-search-btn" onClick={onClose} title="Close (Esc)">
             <svg
               width="18"
               height="18"
@@ -111,26 +95,35 @@ export default function SearchModal({
               <div
                 key={conv.id}
                 className="search-result-item"
-                role="button"
-                tabIndex={0}
                 onClick={() => {
                   onSelectConversation(conv.id)
                   onClose()
                 }}
               >
-                <div className="search-result-title">
-                  {conv.title || 'Untitled chat'}
+                <div className="item-left">
+                  <svg
+                    className="item-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span className="item-title">{conv.title || 'Untitled Chat'}</span>
                 </div>
-                <div className="search-result-preview">
-                  {conv.messages && conv.messages.length > 0
-                    ? conv.messages[conv.messages.length - 1].content
-                    : 'No messages yet'}
-                </div>
+                <span className="item-time">
+                  {conv.messages?.length || 0} messages
+                </span>
               </div>
             ))
           ) : (
-            <div className="search-empty">
-              {query.trim() ? 'No matching conversations' : 'Type to search...'}
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#8e8ea0', fontSize: '0.875rem' }}>
+              {query ? `No chats matching "${query}"` : 'No conversations yet.'}
             </div>
           )}
         </div>
