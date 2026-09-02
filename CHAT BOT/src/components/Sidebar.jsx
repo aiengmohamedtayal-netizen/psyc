@@ -27,6 +27,7 @@ export default function Sidebar({
   onOpenWorryDump,
   onOpenMoodTracker,
   onOpenAuth,
+  onOpenProfile,
 }) {
   return (
     <aside
@@ -60,6 +61,7 @@ export default function Sidebar({
         currentUser={currentUser}
         onLogout={onLogout}
         onOpenAuth={onOpenAuth}
+        onOpenProfile={onOpenProfile}
       />
     </aside>
   )

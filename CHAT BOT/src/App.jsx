@@ -122,6 +122,7 @@ export default function App() {
         onOpenWorryDump={() => modalManager.openModal('worry', sidebar.closeMobileSidebar)}
         onOpenMoodTracker={() => modalManager.openModal('mood', sidebar.closeMobileSidebar)}
         onOpenAuth={() => modalManager.openModal('auth', sidebar.closeMobileSidebar)}
+        onOpenProfile={() => modalManager.openModal('profile', sidebar.closeMobileSidebar)}
       />
 
       {currentView === 'chats' ? (
@@ -146,9 +147,11 @@ export default function App() {
       <AppModals
         modalManager={modalManager}
         conversations={conversations}
+        currentUser={currentUser}
         onSelectConversation={handleSelectConversation}
         onStartChatWithResult={handleStartChatWithResult}
         onLoginSuccess={setCurrentUser}
+        onUpdateUser={setCurrentUser}
       />
     </div>
   )

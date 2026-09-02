@@ -6,6 +6,7 @@ import AmbientSoundModal from './AmbientSoundModal.jsx'
 import WorryDumpModal from './WorryDumpModal.jsx'
 import MoodTrackerModal from './MoodTrackerModal.jsx'
 import AuthPage from './AuthPage.jsx'
+import ProfileSettingsModal from './ProfileSettingsModal.jsx'
 
 /**
  * Container component that declaratively renders all dialogs/modals based
@@ -14,11 +15,13 @@ import AuthPage from './AuthPage.jsx'
 export default function AppModals({
   modalManager,
   conversations,
+  currentUser,
   onSelectConversation,
   onStartChatWithResult,
   onLoginSuccess,
+  onUpdateUser,
 }) {
-  const { isModalOpen, closeModal, openModal } = modalManager
+  const { isModalOpen, closeModal } = modalManager
 
   return (
     <>
@@ -62,6 +65,13 @@ export default function AppModals({
           onLoginSuccess(user)
           closeModal()
         }}
+      />
+
+      <ProfileSettingsModal
+        isOpen={isModalOpen('profile')}
+        onClose={closeModal}
+        currentUser={currentUser}
+        onUpdateUser={onUpdateUser}
       />
     </>
   )
