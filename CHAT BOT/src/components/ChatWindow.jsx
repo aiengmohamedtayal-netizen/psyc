@@ -228,40 +228,49 @@ export default function ChatWindow({
 
   return (
     <main className={`main-content ${isChatMode ? 'chat-mode' : ''}`}>
-      {/* Mobile & Desktop Header Bar */}
-      <div className="mobile-topbar">
-        <button
-          className="mobile-menu-btn"
-          onClick={onToggleSidebar}
-          aria-label="Toggle navigation menu"
-          title="Menu"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-
-        <div className="topbar-brand-group">
-          <span className="mobile-title">Stress AI</span>
+      {/* Minimalist Top Header Navigation */}
+      <header className="app-header">
+        <div className="header-left">
           <button
-            onClick={onOpenBreathing}
-            className="header-pill-btn header-breathing-btn"
-            title="Guided 4-7-8 Breathing"
+            className="icon-btn menu-btn"
+            onClick={onToggleSidebar}
+            aria-label="Open Menu"
+            title="القائمة"
           >
-            <span className="pill-icon">🧘</span>
-            <span className="pill-label">Breathing</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
           </button>
+          <span className="app-title">Stress AI</span>
         </div>
 
-        <div className="topbar-actions-group">
+        <div className="header-right">
+          {/* يظهر فقط في الديسكتوب والتابلت */}
+          <button
+            className="header-pill-btn breathing-btn desktop-only"
+            onClick={onOpenBreathing}
+            title="Guided 4-7-8 Breathing"
+          >
+            <span>🧘</span> Breathing
+          </button>
+
+          {/* زر الخروج السريع بتصميم Clean وبدون إيموجي على الموبايل */}
+          <button
+            className="panic-btn-compact"
+            onClick={handleQuickExit}
+            title="خروج سريع فوري ومحو الآثار لحماية الخصوصية"
+          >
+            خروج سريع
+          </button>
+
           {isChatMode && (
             <button
-              className="mobile-new-btn"
+              className="icon-btn export-btn"
               onClick={onExportChat}
               aria-label="Export conversation"
-              title="Export chat as Markdown"
+              title="تصدير المحادثة"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -271,29 +280,20 @@ export default function ChatWindow({
             </button>
           )}
 
-          {/* Quick-Exit Panic Button */}
+          {/* زر محادثة جديدة (+) كأيقونة دائرية ناعمة */}
           <button
-            className="header-pill-btn header-panic-btn"
-            onClick={handleQuickExit}
-            title="خروج سريع فوري ومحو الآثار لحماية الخصوصية"
-          >
-            <span className="pill-icon">🚪</span>
-            <span className="pill-label">خروج سريع</span>
-          </button>
-
-          <button
-            className="mobile-new-btn"
+            className="icon-btn new-chat-btn"
             onClick={onNewChat}
             aria-label="New chat"
-            title="New Chat"
+            title="محادثة جديدة"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Claude Editorial Message Stream */}
       <div className="messages-container">

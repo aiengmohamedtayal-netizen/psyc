@@ -400,9 +400,11 @@ html, body {
   background-color: var(--bg-main);
 }
 
-/* Mobile top navigation header (hidden on desktop) */
-.mobile-topbar {
-  display: none;
+/* ═══════════════════════════════════════════════════════════
+   CLAUDE MINIMALIST APP HEADER NAVIGATION
+   ═══════════════════════════════════════════════════════════ */
+.app-header {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
@@ -412,24 +414,93 @@ html, body {
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
   z-index: 30;
+  width: 100%;
 }
 
-.topbar-brand-group {
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-right {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.topbar-actions-group {
-  display: flex;
+.app-title {
+  font-family: var(--font-serif);
+  font-size: 1.18rem;
+  font-weight: 500;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  user-select: none;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.new-chat-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.new-chat-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Minimalist Clean Panic Button */
+.panic-btn-compact {
+  background: rgba(220, 38, 38, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  white-space: nowrap;
+  user-select: none;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panic-btn-compact:hover {
+  background: rgba(220, 38, 38, 0.22);
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #fca5a5;
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.2);
 }
 
 .header-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 0.82rem;
   font-weight: 500;
   padding: 5px 12px;
@@ -446,17 +517,6 @@ html, body {
 .header-pill-btn:hover {
   background: var(--bg-hover);
   border-color: var(--accent-border);
-}
-
-.header-panic-btn {
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  color: #f87171 !important;
-  background: rgba(239, 68, 68, 0.08) !important;
-}
-
-.header-panic-btn:hover {
-  background: rgba(239, 68, 68, 0.2) !important;
-  border-color: #ef4444 !important;
 }
 
 .hero-logo-icon {
@@ -1297,48 +1357,41 @@ html, body {
     justify-content: flex-start;
   }
 
-  /* Header Navigation */
-  .mobile-topbar {
+  /* Minimalist Header Navigation on Mobile */
+  .app-header {
     display: flex !important;
-    padding: 0 10px;
+    padding: 0 12px;
     height: 48px;
     justify-content: space-between;
   }
 
-  .topbar-brand-group {
+  .header-left {
+    gap: 8px;
+  }
+
+  .header-right {
     gap: 6px;
   }
 
-  .topbar-actions-group {
-    gap: 4px;
+  .app-title {
+    font-size: 1.05rem;
+    font-weight: 500;
   }
 
-  .mobile-title {
-    font-size: 0.96rem;
-    font-weight: 600;
-  }
-
-  /* Hide secondary button labels on mobile; keep icons only */
-  .header-pill-btn .pill-label {
+  /* Hide Breathing button on mobile header */
+  .desktop-only {
     display: none !important;
   }
 
-  .header-pill-btn {
-    padding: 4px 8px !important;
-    min-width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-    justify-content: center !important;
+  /* Sleek clean panic button on mobile */
+  .panic-btn-compact {
+    padding: 4px 10px;
+    font-size: 0.76rem;
   }
 
-  .header-pill-btn .pill-icon {
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  .mobile-menu-btn,
-  .mobile-new-btn {
-    padding: 6px;
+  .icon-btn {
+    width: 32px;
+    height: 32px;
   }
 
   /* Sidebar Drawer on Mobile */
@@ -1500,10 +1553,14 @@ html, body {
    2. TABLETS (min-width: 641px) and (max-width: 1024px)
    ───────────────────────────────────────────────────────────── */
 @media (min-width: 641px) and (max-width: 1024px) {
-  .mobile-topbar {
+  .app-header {
     display: flex !important;
     padding: 0 16px;
     height: 52px;
+  }
+
+  .desktop-only {
+    display: inline-flex !important;
   }
 
   .sidebar {
@@ -1525,14 +1582,14 @@ html, body {
     display: block;
   }
 
-  .header-pill-btn .pill-label {
-    display: inline !important;
+  .header-pill-btn {
+    padding: 6px 12px !important;
     font-size: 13px !important;
   }
 
-  .header-pill-btn {
-    padding: 6px 10px !important;
-    font-size: 13px !important;
+  .panic-btn-compact {
+    padding: 5px 12px !important;
+    font-size: 0.78rem !important;
   }
 
   .hero-wrapper {
@@ -1584,8 +1641,18 @@ html, body {
    3. DESKTOP & LARGE SCREENS (min-width: 1025px)
    ───────────────────────────────────────────────────────────── */
 @media (min-width: 1025px) {
-  .mobile-topbar {
+  .app-header {
+    display: flex !important;
+    padding: 0 24px;
+    height: 56px;
+  }
+
+  .menu-btn {
     display: none !important;
+  }
+
+  .desktop-only {
+    display: inline-flex !important;
   }
 
   .sidebar {
