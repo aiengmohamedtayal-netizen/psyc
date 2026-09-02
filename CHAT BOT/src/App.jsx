@@ -68,14 +68,90 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Persist conversations to localStorage
+  const getStorageKey = useCallback((user) => {
+    return user?.id ? `stress_ai_conversations_${user.id}` : 'stress_ai_conversations_guest'
+  }, [])
+
+  // Sync conversations when currentUser changes (Login / Logout / Switch account)
+  useEffect(() => {
+    const key = getStorageKey(currentUser)
+    if (currentUser?.token) {
+      // Fetch user's persistent conversations from Neon Cloud DB
+      fetch(`${API_BASE_URL}/api/conversations`, {
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setConversations(data)
+            localStorage.setItem(key, JSON.stringify(data))
+          } else {
+            try {
+              const local = localStorage.getItem(key)
+              setConversations(local ? JSON.parse(local) : [])
+            } catch {
+              setConversations([])
+            }
+          }
+        })
+        .catch(() => {
+          try {
+            const local = localStorage.getItem(key)
+            setConversations(local ? JSON.parse(local) : [])
+          } catch {
+            setConversations([])
+          }
+        })
+    } else {
+      // Guest mode
+      try {
+        const local = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY)
+        setConversations(local ? JSON.parse(local) : [])
+      } catch {
+        setConversations([])
+      }
+    }
+  }, [currentUser, getStorageKey])
+
+  // Persist conversations to local storage per user
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
+      const key = getStorageKey(currentUser)
+      localStorage.setItem(key, JSON.stringify(conversations))
     } catch (e) {
       console.warn('Failed to save to localStorage:', e)
     }
-  }, [conversations])
+  }, [conversations, currentUser, getStorageKey])
+
+  const syncConversationToCloud = useCallback((conv) => {
+    if (!currentUser?.token || !conv) return
+    fetch(`${API_BASE_URL}/api/conversations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${currentUser.token}`,
+      },
+      body: JSON.stringify({
+        id: String(conv.id),
+        title: conv.title || 'جلسة جديدة',
+        updatedAt: conv.updatedAt || Date.now(),
+        messages: (conv.messages || []).map((m) => ({
+          id: String(m.id),
+          role: m.role,
+          content: m.content || '',
+          timestamp: m.timestamp || Date.now(),
+          clinical_reference: m.clinical_reference || null,
+        })),
+      }),
+    }).catch((err) => console.warn('Cloud conversation sync note:', err))
+  }, [currentUser])
+
+  // Automatically sync to Neon Cloud DB when bot finishes streaming
+  useEffect(() => {
+    if (!isBotTyping && activeConversation && currentUser?.token) {
+      syncConversationToCloud(activeConversation)
+    }
+  }, [isBotTyping, activeConversation, currentUser, syncConversationToCloud])
 
   // Global keyboard shortcut: Ctrl+K / Cmd+K for search
   useEffect(() => {
@@ -112,11 +188,18 @@ export default function App() {
   const handleDeleteConversation = useCallback((id) => {
     setConversations((prev) => prev.filter((c) => c.id !== id))
     setActiveConversationId((currentActive) => (currentActive === id ? null : currentActive))
-  }, [])
+    if (currentUser?.token) {
+      fetch(`${API_BASE_URL}/api/conversations/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${currentUser.token}` },
+      }).catch((err) => console.warn('Cloud delete error:', err))
+    }
+  }, [currentUser])
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem(CURRENT_USER_KEY)
     setCurrentUser(null)
+    setActiveConversationId(null)
   }, [])
 
   // Export current conversation to Markdown

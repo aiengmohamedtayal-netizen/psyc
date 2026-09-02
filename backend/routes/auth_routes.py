@@ -118,6 +118,8 @@ def get_me(user_id: Optional[str] = Depends(get_current_user_id)):
 
 @conv_router.get("")
 def list_conversations(user_id: Optional[str] = Depends(get_current_user_id)):
+    if not user_id:
+        return []
     db = SessionLocal()
     try:
         convs = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.updated_at.desc()).all()
@@ -141,3 +143,77 @@ def list_conversations(user_id: Optional[str] = Depends(get_current_user_id)):
         return result
     finally:
         db.close()
+
+
+class MessagePayload(BaseModel):
+    id: Optional[str] = None
+    role: str
+    content: str
+    timestamp: Optional[int] = None
+    clinical_reference: Optional[Dict[str, Any]] = None
+
+
+class ConversationSaveRequest(BaseModel):
+    id: str
+    title: str
+    messages: List[MessagePayload]
+    updatedAt: Optional[int] = None
+
+
+@conv_router.post("")
+def save_conversation(req: ConversationSaveRequest, user_id: Optional[str] = Depends(get_current_user_id)):
+    if not user_id:
+        return {"status": "skipped", "detail": "Guest mode - saved locally"}
+    db = SessionLocal()
+    try:
+        conv = db.query(Conversation).filter(Conversation.id == req.id).first()
+        now = time.time()
+        if not conv:
+            conv = Conversation(
+                id=req.id,
+                user_id=user_id,
+                title=req.title,
+                created_at=now,
+                updated_at=now
+            )
+            db.add(conv)
+        else:
+            conv.title = req.title
+            conv.updated_at = now
+
+        db.query(Message).filter(Message.conversation_id == req.id).delete()
+        import json
+        for idx, m in enumerate(req.messages):
+            msg_id = m.id or f"{req.id}_{idx}_{int(now)}"
+            ref_str = json.dumps(m.clinical_reference) if m.clinical_reference else None
+            db_msg = Message(
+                id=msg_id,
+                conversation_id=req.id,
+                role=m.role,
+                content=m.content,
+                clinical_reference=ref_str,
+                created_at=(m.timestamp / 1000.0) if m.timestamp else now
+            )
+            db.add(db_msg)
+
+        db.commit()
+        return {"status": "saved", "id": req.id}
+    finally:
+        db.close()
+
+
+@conv_router.delete("/{conv_id}")
+def delete_conversation(conv_id: str, user_id: Optional[str] = Depends(get_current_user_id)):
+    if not user_id:
+        return {"status": "deleted"}
+    db = SessionLocal()
+    try:
+        conv = db.query(Conversation).filter(Conversation.id == conv_id, Conversation.user_id == user_id).first()
+        if conv:
+            db.query(Message).filter(Message.conversation_id == conv_id).delete()
+            db.delete(conv)
+            db.commit()
+        return {"status": "deleted", "id": conv_id}
+    finally:
+        db.close()
+
